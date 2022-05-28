@@ -1,0 +1,14 @@
+{
+  "vhosts": [
+    {
+      "name": "rabbitmq_vhost"
+    }
+  ],
+  "parameters": [],
+  "exchanges": [],
+  "policies": [],
+  "queues": []
+}
+
+
+

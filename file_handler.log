@@ -1,0 +1,98 @@
+could not run Celery Task. Exception Has Occurred. time -2022-05-22 13:17:41.323364
+could not run Celery Task. Exception Has Occurred. time -2022-05-22 13:18:42.028626
+could not run Celery Task. Exception Has Occurred. time -2022-05-22 13:19:02.319640
+could not run Celery Task. Exception Has Occurred. time -2022-05-22 13:35:04.293771
+could not run Celery Task. Exception Has Occurred. time -2022-05-22 16:06:24.545985
+could not create subscription task. Exception: insert or update on table "django_celery_beat_periodictask" violates foreign key constraint "django_celery_beat_p_crontab_id_d3cba168_fk_django_ce"
+DETAIL:  Key (crontab_id)=(5) is not present in table "django_celery_beat_crontabschedule".
+
+ERROR 2022-05-24 10:21:48,724 views 86342 12995596288 could not run Celery Task. Exception Has Occurred. time -2022-05-24 10:21:48.724111
+ERROR 2022-05-24 10:32:43,678 views 86865 13134336000 could not run Celery Task. Exception Has Occurred. time -2022-05-24 10:32:43.678221
+ERROR 2022-05-24 10:36:12,567 views 87030 13135687680 could not run Celery Task. Exception Has Occurred. time -2022-05-24 10:36:12.566965
+ERROR 2022-05-24 13:43:35,852 sub_tasks 91892 8633382400 [RECONNECT EXCEPTION] localhost:27018: connection pool paused
+ERROR 2022-05-25 12:46:11,583 sub_tasks 1286 8639272448 [RECONNECT EXCEPTION] localhost:27018: connection pool paused
+ERROR 2022-05-26 05:55:43,481 sub_api 11353 8641943040 Exception while canceling subscription. PeriodicTask matching query does not exist.
+INFO 2022-05-26 06:18:09,442 sub_tasks 12114 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,445 sub_tasks 12116 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,449 sub_tasks 12117 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,457 sub_tasks 12118 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,465 sub_tasks 12113 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,472 sub_tasks 12115 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,482 sub_tasks 12119 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,495 sub_tasks 12120 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,496 sub_tasks 12114 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,500 sub_tasks 12116 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,505 sub_tasks 12117 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,518 sub_tasks 12118 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,525 sub_tasks 12113 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,532 sub_tasks 12115 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,539 sub_tasks 12119 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,543 sub_tasks 12114 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,549 sub_tasks 12117 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,551 sub_tasks 12116 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,561 sub_tasks 12120 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,568 sub_tasks 12118 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,571 sub_tasks 12113 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,581 sub_tasks 12115 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,594 sub_tasks 12119 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,596 sub_tasks 12114 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,604 sub_tasks 12116 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,617 sub_tasks 12117 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,619 sub_tasks 12120 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,626 sub_tasks 12118 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,632 sub_tasks 12113 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,635 sub_tasks 12115 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,644 sub_tasks 12119 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,651 sub_tasks 12114 8668231168 Periodic Task Does Not Exist.
+INFO 2022-05-26 06:18:09,654 sub_tasks 12116 8668231168 Periodic Task Does Not Exist.
+ERROR 2022-05-26 06:19:15,810 sub_api 12042 13017473024 Exception while canceling subscription. PeriodicTask matching query does not exist.
+ERROR 2022-05-26 06:50:54,206 sub_api 13166 8598443520 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 06:55:46,882 sub_api 13331 8605541888 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 06:56:01,773 sub_api 13358 8676558336 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 06:57:36,445 sub_api 13414 8592123392 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 06:57:48,518 sub_api 13437 8628590080 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:09:05,844 sub_api 13853 8639370752 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:10:05,498 sub_api 13901 8664729088 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:17:20,286 sub_api 14192 8628954624 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:17:55,326 sub_api 14223 8666678784 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:18:30,263 sub_api 14253 8595904000 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:19:14,194 sub_api 14289 8627983872 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:19:31,171 sub_api 14313 8668268032 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:20:55,898 sub_api 14368 8667366912 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:21:44,458 sub_api 14408 8629249536 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:26:53,733 sub_api 14564 8670377472 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:29:03,332 sub_api 14647 8634529280 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:29:26,787 sub_api 14671 8638092800 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:32:58,093 sub_api 14784 8636446208 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:33:12,797 sub_api 14806 8637949440 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:33:30,225 sub_api 14832 8632010240 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:34:19,807 sub_api 14875 8638526976 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:34:33,678 sub_api 14897 8673166848 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:40:35,017 sub_api 15129 8599528960 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:41:06,220 sub_api 15156 8641119744 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:41:46,098 sub_api 15196 8631059968 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:42:00,668 sub_api 15217 8597083648 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:45:13,356 sub_api 15335 8663033344 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:46:10,615 sub_api 15376 8634848768 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:46:46,962 sub_api 15417 8628045312 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:47:14,122 sub_api 15448 8627148288 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:51:00,854 sub_api 15590 8595641856 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 07:53:13,919 sub_api 15671 8638756352 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:10:11,802 sub_api 15944 8663713280 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:12:19,734 sub_api 16024 8594224640 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:13:58,587 sub_api 16132 8675067392 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:20:33,390 sub_api 16362 8598398464 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:21:07,415 sub_api 16398 8607602176 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:21:35,845 sub_api 16425 8598939136 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:22:49,048 sub_api 16476 8601671168 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:23:25,433 sub_api 16509 8661546496 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:27:42,962 sub_api 16682 8600839680 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:28:02,526 sub_api 16706 8662554112 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:53:32,650 sub_api 16859 8634357248 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:55:52,201 sub_api 16963 8673498624 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 08:57:45,041 sub_api 17030 8639985152 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 09:22:14,729 sub_api 17782 13003288576 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 09:23:46,958 sub_api 17782 13003288576 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 09:23:50,148 sub_api 17782 13003288576 DoesNotExist Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 09:38:23,521 sub_api 18482 8665642496 AttributeError Exception has occurred, while was canceling subscription.
+ERROR 2022-05-26 09:43:14,199 sub_api 18674 8635307520 AttributeError Exception has occurred, while was canceling subscription.
