@@ -1,6 +1,7 @@
-FROM python:3.9-slim-buster
+FROM python:3.8.13-buster
 
 WORKDIR /project/app/
+ENV PYTHONUNBUFFERED=1
 RUN pip --upgrade pip
 COPY ./requirements.txt requirements.txt
 

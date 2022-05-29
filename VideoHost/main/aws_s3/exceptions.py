@@ -7,23 +7,8 @@ class AwsFileNotFoundError(BaseException):
     def __call__(self):
         raise self
 
-
-
-class XMPPUserCreationFailed(BaseException):
+class AwsInvalidFilelinkError(BaseException):
     pass
 
-
-
-class XMPPUserDeleteFailed(BaseException):
+class AwsDeleleFailed(BaseException):
     pass
-
-
-
-class XMPPGroupCreationFailed(BaseException):
-    pass
-
-
-
-class XMPPGroupDeleteFailed(BaseException):
-    pass
-

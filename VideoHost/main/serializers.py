@@ -1,18 +1,7 @@
 from rest_framework import serializers
 from . import models
 
-class VideoSerializer(serializers.ModelSerializer):
-
-    name = serializers.CharField(label='Video Name', required=True)
-    file_link = serializers.CharField(label='File Link', required=True)
-    created_at = serializers.DateTimeField(label='Created At', required=True)
-
-    class Meta:
-        model = models.Video
-        fields = ['name', 'file_link', 'created_at']
-
 from django.core import validators
-
 
 class PhoneNumberField(serializers.CharField):
 
@@ -63,3 +52,8 @@ class UserLoginSerializer(UserSerializer):
         del self.fields['phone_number']
         del self.fields['avatar_image']
 
+class SongSerializer(serializers.ModelSerializer):
+    pass
+
+class SongCreateSerializer(serializers.ModelSerializer):
+    pass

@@ -1,46 +1,14 @@
 from . import views
 from django.urls import path
-from . import validators, groups, users, videos
+from . import users
 from rest_framework import permissions
 
 app_name = 'main'
 
-urlpatterns = [
+urlpatterns = []
 
-]
-videos_patterns = [
 
-    path('', views.MainAPIView.as_view(), name='main_page'),
-    path('get/all/group/videos/', videos.GroupVideoAPIView.as_view({'action': 'list'}), name='all-videos'),
-    path('get/video/', videos.GroupVideoAPIView.as_view({'action': 'retrieve'}), name='video'),
-    path('delete/video/', videos.GroupVideoAPIView.as_view({'action': 'delete'}), name='delete-video'),
-    path('upload/video/', videos.GroupVideoAPIView.as_view({'action': 'create'}), name='upload-video'),
-
-]
-
-validator_patterns = [
-
-    #validator urls:
-    path('validate/register/form/', validators.validate_login_form, name='register-form'),
-    path('validate/login/form/', validators.validate_register_form, name='login-form'),
-    path('validate/chat/form', validators.validate_chat_form, name='chat-form'),
-
-]
-
-group_patterns = [
-
-    #group urls:
-    path('get/group/', groups.GetGroupAPIView.as_view(), name='group'),
-    path('create/group/', groups.CreateGroupAPIView.as_view(), name='create-group'),
-    path('edit/group/', groups.EditGroupAPIView.as_view(), name='edit-group'),
-    path('delete/group/', groups.DeleteGroupAPIView.as_view(), name='delete-group'),
-
-    # members urls:
-    path('remove/member/', groups.MembersViewSet.as_view({'delete': 'destroy'}), name='remove-member'),
-    path('add/member/', groups.MembersViewSet.as_view({'post': 'create'}), name='add-member'),
-
-    path('get/group/member/', groups.MembersViewSet.as_view({'get': 'retrieve'}), name='get-group-member'),
-    path('get/group/members/', groups.MembersViewSet.as_view({'get': 'list'})),
+songs_urlpatterns = [
 
 ]
 
@@ -67,10 +35,8 @@ healthcheck_patterns = [
 ]
 
 
-urlpatterns += group_patterns
 urlpatterns += customer_patterns
-urlpatterns += validator_patterns
-urlpatterns =+ videos_patterns
+urlpatterns += songs_urlpatterns
 urlpatterns += block_patterns
 urlpatterns += healthcheck_patterns
 
@@ -97,3 +63,6 @@ openapi_urlpatterns_schema = [
 ]
 
 urlpatterns += openapi_urlpatterns_schema
+
+
+

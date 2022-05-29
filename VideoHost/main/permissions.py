@@ -5,13 +5,6 @@ import django.core.exceptions
 
 logger = logging.getLogger(__name__)
 
-class IsAdmin(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        group = models.ChatGroup.objects.filter(group_name=request.query_params['group_name']).first()
-        if not request.user in group.admins.all():
-            return django.core.exceptions.PermissionDenied()
-        return True
 
 class IsNotAuthorizedOrReadOnly(permissions.BasePermission):
 
@@ -26,16 +19,6 @@ class IsNotAuthorizedOrReadOnly(permissions.BasePermission):
         except(KeyError):
             return True
 
-class CheckIsBlockedOrNotMemberUser(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-
-        group = models.ChatGroup.objects.get(group_name=request.query_params.get('group_name'))
-        if not request.user in group.members.all() or request.user.is_blocked:
-            logger.debug('permission not allowed...')
-            raise django.core.exceptions.PermissionDenied()
-        return True
-
 class IsNotBlocked(permissions.BasePermission):
 
     def has_permission(self, request, view):
@@ -43,27 +26,25 @@ class IsNotBlocked(permissions.BasePermission):
             return True
         raise django.core.exceptions.PermissionDenied()
 
-class IsNotOutcast(permissions.BasePermission):
+
+class HasSubscription(permissions.BasePermission):
+
+
+    def has_sub_permission(self, user_id, sub_id):
+        import requests
+        response = requests.get('http://localhost:8076/has/sub/permission/',
+        params={'customer_id': user_id, 'sub_id': sub_id}, timeout=10)
+        return json.loads(response.text)['sub_property']
+
 
     def has_permission(self, request, view):
-        try:
-            group = models.ChatGroup.objects.get(id=request.query_params.get('group_id'))
-            if models.Member.objects.get(user=request.user, group=group).is_outcast:
-                return django.core.exceptions.PermissionDenied()
-            return True
-        except(django.core.exceptions.ObjectDoesNotExist, AssertionError):
-            return False
-
-class IsGroupAdmin(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        try:
-            group = models.ChatGroup.objects.get(id=request.query_params.get('group_id'))
-            if models.Member.objects.get(user=request.user, group=group).role == 'admin':
+        song = models.Song.objects.get(id=request.query_params.get('song_id'))
+        if getattr(song, 'subscriptions'):
+            if self.has_sub_permission(user_id=request.user.id,
+            sub_id=song.subscription.dict().get('subscription_id')):
                 return True
             return django.core.exceptions.PermissionDenied()
-        except(AssertionError, django.core.exceptions.ObjectDoesNotExist):
-            return False
+        return True
 
 
 
