@@ -48,7 +48,13 @@ Dependencies:
 #Usage
     
     1: Make Sure Matching of the dependencies.
+    
 
+Run Rabbitmq Docker-Compose File from "Services" Branch
+
+    cd rabbitmq
+    
+    docker-compose up -d 
 
 Copy repository:
     
@@ -57,6 +63,7 @@ Copy repository:
 Install Docker Images:
     
     docker pull <sup_application>
+
 
 1: Check the project/sub_env.env file in order to check that there is no conflicts.
 

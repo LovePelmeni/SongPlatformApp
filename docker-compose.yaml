@@ -3,13 +3,10 @@ services:
 
   sub_nginx_server:
     restart: on-failure
-    build:
-      context: ./nginx/
-      dockerfile: ./nginx/.
+    build: ./nginx/.
     container_name: sub_nginx_container
-    image: nginx:latest
     ports:
-      - 8077:82
+      - "8077:82"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
     links:
