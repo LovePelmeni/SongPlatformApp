@@ -52,8 +52,10 @@ class UserLoginSerializer(UserSerializer):
         del self.fields['phone_number']
         del self.fields['avatar_image']
 
+
 class SongSerializer(serializers.ModelSerializer):
     pass
+
 
 class SongCreateSerializer(serializers.ModelSerializer):
     pass

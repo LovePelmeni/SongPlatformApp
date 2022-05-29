@@ -2,6 +2,7 @@ from . import views
 from django.urls import path
 from . import users
 from rest_framework import permissions
+from . import songs, song_permissions
 
 app_name = 'main'
 
@@ -9,6 +10,11 @@ urlpatterns = []
 
 
 songs_urlpatterns = [
+
+    path('song/', songs.SongOwnerGenericView.as_view(), name='song'),
+    path('catalog/all/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
+    path('get/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
+    path('/song/permission/', song_permissions.SongPermissions.as_view(), name='song-permission'),
 
 ]
 

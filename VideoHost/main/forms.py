@@ -52,3 +52,6 @@ class EditGroupForm(forms.ModelForm):
         fields = ['group_name', 'logo']
 
 
+class SongForm(forms.ModelForm):
+
+    pass

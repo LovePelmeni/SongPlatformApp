@@ -111,8 +111,10 @@ class Song(models.Model):
 
     objects = SongManager()
     subscription: typing.Optional[Subscription]
+    etag: typing.Optional[str]
 
     owner = models.ManyToManyField(CustomUser, related_name='songs')
+    preview = models.CharField(verbose_name='AWS Preview File link', max_length=100, null=True)
     song_name = models.CharField(verbose_name='Song Name', null=False, max_length=100)
     song_description = models.TextField(verbose_name='Song Description', null=True, max_length=100)
     audio_file = models.CharField(verbose_name='AWS Audio File Link', null=False, max_length=300)
@@ -122,5 +124,12 @@ class Song(models.Model):
         aws_s3.files_api._delete_from_aws_storage(file_link=kwargs.get('file_link'))
         return super().delete(using=using, **kwargs)
 
+    @staticmethod
+    def get_etag(song):
+        return "%s-%s" % (song.song_name, datetime.datetime.now())
+
+    def set_etag(self, etag):
+        self.etag = etag
+        self.save()
 
 
