@@ -1,0 +1,18 @@
+version: "3.9"
+
+networks:
+  global_application_network: # global web application network, that manage the whole project
+    # in this case is used for connect this service with other ones.
+    name: global_application_network
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 127.18.235.0/24
+          gateway: 127.18.235.1
+
+
+
+
