@@ -10,9 +10,6 @@ import django.dispatch
 from django import db
 import pydantic
 
-user_created = django.dispatch.dispatcher.Signal()
-user_deleted = django.dispatch.dispatcher.Signal()
-
 transaction_checker = distributed_transaction_checker.DistributedTransactionHandler
 
 
@@ -32,12 +29,13 @@ class PhoneNumberField(models.CharField):
 class CustomManager(BaseUserManager):
 
     def create_user(self, **kwargs):
-        user = self.model(**kwargs)
-        user.set_password(raw_password=kwargs.get('password'))
-        user.save(using=self._db)
-        # transaction_checker(queue='user_created').publish(event_data={'user_id': user.id})
-        user_created.send(sender=self, user=user)
-        return user
+        try:
+            user = distributed_transaction_checker.CustomerDistributedTransactionHandler(**kwargs)
+            user.set_password(raw_password=kwargs.get('password'))
+            user.save(using=self._db)
+            return user
+        except(distributed_transaction_checker.DistributedTransactionFailed,):
+            raise NotImplementedError()
 
     def create_superuser(self, username, password, phone_number):
         user = self.model(username=username, password=password, phone_number=phone_number, is_staff=True)
@@ -87,9 +85,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         self.save(using=self._db)
 
 
-    def delete(self, using=typing.Literal["default"], **kwargs):
+    def delete(self, using=None, **kwargs):
         try:
-            user_deleted.send(sender=self, user=user)
+            distributed_transaction_checker.CustomerDistributedTransactionHandler(
+            method='delete', url='delete/customer/', customer_data=None, query_params=None).execute_transaction()
             return super().delete(using=using, **kwargs)
 
         except() as exception:
@@ -135,7 +134,5 @@ class Song(models.Model):
     def set_etag(self, etag):
         self.etag = etag
         self.save()
-
-
 
 

@@ -68,12 +68,9 @@ class CreateUserAPIView(views.APIView):
                 response.set_signed_cookie('jwt-token', token)
                 return response
 
-            except(db.IntegrityError, jwt.PyJWTError) as err:
+            except(db.IntegrityError, jwt.PyJWTError, NotImplementedError) as err:
                 logger.error('creation user failed! Error has occurred: %s' % err.args)
                 return django.http.HttpResponseServerError()
-
-            except(exceptions.XMPPUserCreationFailed,):
-                logger.debug('[USER-API-EXCEPTION], operation CREATE FAILED. time - [%s]' % (datetime.datetime.now()))
 
         return django.http.HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
@@ -140,7 +137,7 @@ class LoginAPIView(views.APIView):
 
     @csrf.csrf_exempt
     def post(self, request):
-        response = django.http.HttpResponseRedirect(reverse('main:main_page'))
+        response = django.http.HttpResponse(status=200)
         user = authenticate(username=request.data.get('username'),
         password=request.data.get('password'))
         if user is not None:
