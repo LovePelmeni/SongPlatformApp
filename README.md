@@ -3,7 +3,7 @@
     SUBSCRIPTION SERVICE (EXTENSION FOR WEB APP) 
 
                 Date: 24.05.22
-I have finally released new API service for Web App Project.
+I have finally released new API service for Song Platform Project.
 
 Technologies used in the project:
     
