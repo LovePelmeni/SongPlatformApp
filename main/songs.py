@@ -24,6 +24,7 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
+
 class SongOwnerGenericView(generics.GenericAPIView):
 
     queryset = models.Song.objects.all()
@@ -75,8 +76,8 @@ class SongOwnerGenericView(generics.GenericAPIView):
 
                 for elem, value in serializer.validated_data.items():
                     song.__setattr__(elem, value)
-                song.save()
 
+                song.save()
                 return django.http.HttpResponse()
 
         except(djagno.core.exceptions.ValidationError,) as exception:
@@ -103,3 +104,6 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
+
+
+

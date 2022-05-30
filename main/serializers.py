@@ -53,8 +53,17 @@ class UserLoginSerializer(UserSerializer):
         del self.fields['avatar_image']
 
 
+class SongsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Song
+        exclude = ('song_name', 'amount', 'owners')
+
 class SongSerializer(serializers.ModelSerializer):
-    pass
+
+    class Meta:
+        model = models.Song
+        fields = '__all__'
 
 
 class SongCreateSerializer(serializers.ModelSerializer):

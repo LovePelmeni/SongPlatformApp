@@ -36,7 +36,7 @@ block_patterns = [
 ]
 
 healthcheck_patterns = [
-    path('healthcheck/', views.healthcheck, name='healthcheck'),
+    path('healthcheck/', (lambda request: django.http.HttpResponse(status=200)), name='healthcheck'),
 ]
 
 

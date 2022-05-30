@@ -4,15 +4,16 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 import typing, requests, json
 
+from . import distributed_transaction_checker
 from .aws_s3 import exceptions
 import django.dispatch
 from django import db
 import pydantic
 
-
 user_created = django.dispatch.dispatcher.Signal()
 user_deleted = django.dispatch.dispatcher.Signal()
 
+transaction_checker = distributed_transaction_checker.DistributedTransactionHandler
 
 
 class PhoneNumberField(models.CharField):
@@ -34,6 +35,7 @@ class CustomManager(BaseUserManager):
         user = self.model(**kwargs)
         user.set_password(raw_password=kwargs.get('password'))
         user.save(using=self._db)
+        # transaction_checker(queue='user_created').publish(event_data={'user_id': user.id})
         user_created.send(sender=self, user=user)
         return user
 
@@ -115,7 +117,7 @@ class Song(models.Model):
     subscription: typing.Optional[Subscription]
     etag: typing.Optional[str]
 
-    owner = models.ManyToManyField(CustomUser, related_name='songs')
+    owner = models.ManyToManyField(CustomUser, related_name='songs', null=True)
     preview = models.CharField(verbose_name='AWS Preview File link', max_length=100, null=True)
     song_name = models.CharField(verbose_name='Song Name', null=False, max_length=100)
     song_description = models.TextField(verbose_name='Song Description', null=True, max_length=100)

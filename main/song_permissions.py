@@ -1,6 +1,8 @@
-from rest_framework import viewsets, decorators
+from rest_framework import viewsets, decorators, permissions
 
 class SongPermissions(viewsets.ModelViewSet):
+
+    permission_classes = (permissions.AllowAny,)
 
     @decorators.action(methods=['post'], detail=False)
     def create(self, request):

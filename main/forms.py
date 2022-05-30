@@ -14,41 +14,17 @@ class EditUserForm(forms.ModelForm):
         exclude = ('created_at', 'is_staff', 'is_superuser', 'is_blocked')
 
 
-# message forms:
-class SendGroupMessageForm(forms.Form):
+class SongForm(forms.ModelForm):
 
-    message = forms.CharField(label='Message', widget=forms.TextInput,
-    validators=[validators.MaxLengthValidator, validators.MinLengthValidator], required=False)
-
-
-class EditMessageForm(forms.Form):
-    edited_message = forms.CharField(label='New Message', widget=forms.TextInput, required=False, max_length=100, min_length=1,
+    preview = forms.ImageField(label='Preview', validators=[validators.FileExtensionValidator(
+    allowed_extensions=('.png', '.jpg', '.jpeg'))], required=False)
+    song_name = forms.CharField(label='Song Name', required=True,
     validators=[validators.MaxLengthValidator, validators.MinLengthValidator])
-
-
-
-# group forms:
-class CreateGroupForm(forms.ModelForm):
-
-    group_name = forms.CharField(label='Chat Name', widget=forms.TextInput,
-    validators=[validators.MaxLengthValidator], required=True)
-    logo = forms.ImageField(label='Avatar', required=False,
-    validators=[validators.FileExtensionValidator(allowed_extensions=('png', 'jpg', 'jpeg'))])
-    members = forms.ModelChoiceField(label='Members', queryset=None, required=True)
+    song_description = forms.CharField(label='Song Description', required=True)
+    audio_file = forms.FileField(label='Audio File', required=True,
+    validators=[validators.FileExtensionValidator(allowed_extensions=('.wav', '.mp4', '.aac', '.mp3'))])
 
     class Meta:
-        model = models.ChatGroup
-        fields = ['group_name', 'logo', 'members']
-
-class EditGroupForm(forms.ModelForm):
-
-    group_name = forms.CharField(label='Group Name', widget=forms.TextInput,
-    validators=[validators.MaxLengthValidator, validators.MinLengthValidator], required=False)
-    logo = forms.ImageField(label='Avatar', required=False,
-    validators=[validators.FileExtensionValidator(allowed_extensions=('png', 'jpg', 'jpeg'))])
-
-    class Meta:
-        model = models.ChatGroup
-        fields = ['group_name', 'logo']
-
+        model = models.Song
+        fields = ('preview', 'song_name', 'song_description', 'audio_file')
 

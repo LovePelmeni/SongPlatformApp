@@ -47,7 +47,7 @@ class CreateUserAPIView(views.APIView):
 
     @cache.cache_page(60 * 5)
     def get(self, request):
-        return django.template.response.TemplateResponse(request,
+        return django.http.JsonResponse(request,
         template='main/register.html', context={'form': forms.CreateUserForm()}).render()
 
 
@@ -64,7 +64,7 @@ class CreateUserAPIView(views.APIView):
             try:
                 token = apply_jwt_token(user=user)
                 login(request, user, backend=getattr(settings, 'AUTHENTICATION_CLASSES')[0])
-                response = django.http.HttpResponseRedirect(urls.reverse('main:main_page'))
+                response = django.http.HttpResponse(status=200)
                 response.set_signed_cookie('jwt-token', token)
                 return response
 
@@ -105,8 +105,7 @@ class EditUserAPIView(views.APIView):
             request.user.set_password(form.cleaned_data['password'])
 
         request.user.save()
-        return django.http.HttpResponseRedirect(reverse('main:get_user_profile'))
-
+        return django.http.HttpResponse(status=200)
 
 
 import django.template.response
@@ -122,8 +121,8 @@ def get_user_profile(request):
     key=getattr(settings, 'SECRET_KEY'), algorithms='HS256').get('user_id')
 
     user = models.CustomUser.objects.filter(id=user_id).first()
-    return django.template.response.TemplateResponse(request, template='main/profile.html',
-    context={'user': user}).render()
+    return django.http.JsonResponse(request, template='main/profile.html',
+    context={'user': user})
 
 
 from django.contrib.auth import\
@@ -136,7 +135,7 @@ class LoginAPIView(views.APIView):
 
     @cache.cache_page(timeout=60 * 5)
     def get(self, request):
-        return django.template.response.TemplateResponse(
+        return django.http.JsonResponse(
         request, 'main/index.html', {'form': forms.LoginForm()})
 
     @csrf.csrf_exempt
@@ -150,5 +149,6 @@ class LoginAPIView(views.APIView):
 
             return response
         return django.http.HttpResponse(status=400)
+
 
 

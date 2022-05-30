@@ -32,7 +32,7 @@ class UserAuthBackend(backends.RemoteUserBackend):
             return None
 
     def get_all_permissions(self, user_obj, obj=None):
-        if user.is_anonymous:
+        if user_obj.is_anonymous:
             return django.core.exceptions.PermissionDenied()
         return True
 
