@@ -47,3 +47,8 @@ class HasSubscription(permissions.BasePermission):
         return True
 
 
+class HasSongPermission(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        return request.user in models.Song.objects.get(
+        id=request.query_params.get('song_id')).owner.all()

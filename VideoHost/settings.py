@@ -105,6 +105,7 @@ REST_FRAMEWORK = {
     # 'DEFAULT_AUTHENTICATION_CLASSES': (
     #     'main.authentication.UserAuthenticationClass',
     # ),
+
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
@@ -118,10 +119,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     )
 }
-
-REDIS_CACHE_STORAGE = redis.Redis(host='localhost',
-password='REDIS_PASSWORD', port=6380)
-
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases

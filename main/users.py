@@ -8,7 +8,7 @@ from django import urls
 from . import permissions as api_perms, models, forms, aws_s3, authentication, serializers as api_serializers
 from .aws_s3 import exceptions
 import jwt, logging
-from django.views.decorators import csrf
+from django.views.decorators import csrf, cache
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,6 @@ class CreateUserAPIView(views.APIView):
 
     permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
     serializer_class = api_serializers.UserSerializer
-    renderer_classes = (renderers.JSONRenderer,)
 
 
     @cache.cache_page(60 * 5)
@@ -151,6 +150,5 @@ class LoginAPIView(views.APIView):
 
             return response
         return django.http.HttpResponse(status=400)
-
 
 

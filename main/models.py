@@ -7,6 +7,8 @@ import typing, requests, json
 from .aws_s3 import exceptions
 import django.dispatch
 from django import db
+import pydantic
+
 
 user_created = django.dispatch.dispatcher.Signal()
 user_deleted = django.dispatch.dispatcher.Signal()
@@ -48,7 +50,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(verbose_name='Username', max_length=100, unique=True)
     phone_number = PhoneNumberField(verbose_name='Phone Number', max_length=100, null=False)
 
-    avatar_image = models.URLField(verbose_name='User Avatar', null=True, max_length=100)
+    avatar_image = models.CharField(verbose_name='AWS User Avatar Link', null=True, max_length=100)
 
     email = models.EmailField(verbose_name='Email', null=True, max_length=100)
     password = models.CharField(verbose_name='Password', null=False, max_length=100)
@@ -111,6 +113,7 @@ class Song(models.Model):
 
     objects = SongManager()
     subscription: typing.Optional[Subscription]
+    etag: typing.Optional[str]
 
     owner = models.ManyToManyField(CustomUser, related_name='songs')
     preview = models.CharField(verbose_name='AWS Preview File link', max_length=100, null=True)
@@ -122,6 +125,15 @@ class Song(models.Model):
         from . import aws_s3
         aws_s3.files_api._delete_from_aws_storage(file_link=kwargs.get('file_link'))
         return super().delete(using=using, **kwargs)
+
+    @staticmethod
+    def get_etag(song):
+        return "%s-%s" % (song.song_name, datetime.datetime.now())
+
+    def set_etag(self, etag):
+        self.etag = etag
+        self.save()
+
 
 
 

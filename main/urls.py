@@ -2,13 +2,19 @@ from . import views
 from django.urls import path
 from . import users
 from rest_framework import permissions
+from . import songs, song_permissions
 
 app_name = 'main'
 
 urlpatterns = []
 
-
 songs_urlpatterns = [
+
+    path('song/', songs.SongOwnerGenericView.as_view(), name='song'),
+    path('catalog/all/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
+    path('get/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
+    path('set/song/permission/', song_permissions.SongPermissions.as_view({'post': 'create'}), name='set-song-permission'),
+    path('unset/song/permission/', song_permissions.SongPermissions.as_view({'delete': 'destroy'}), name='unset-song-permission')
 
 ]
 
@@ -19,14 +25,13 @@ customer_patterns = [
     path('edit/user/', users.EditUserAPIView.as_view(), name='edit-user'),
 
     path('create/user/', users.CreateUserAPIView.as_view(), name='create-user'),
-    path('login/user/', users.login_user, name='login-user'),
+    path('login/user/', users.LoginAPIView.as_view(), name='login-user'),
     path('get/user/profile/', users.get_user_profile, name='get_user_profile'),
 ]
 
 block_patterns = [
 
     #block page:
-    path('ban/or/unlock/user/', groups.BanUserAPIView.as_view(), name='ban-or-unlock-user'),
     path('get/blocked/page/', views.get_blocked_page, name='blocked_page'),
 ]
 

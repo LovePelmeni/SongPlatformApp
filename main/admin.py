@@ -8,17 +8,11 @@ class UserModelAdmin(admin.ModelAdmin):
     list_display = ['username', 'phone_number', 'password', 'email']
     fields = ['username', 'phone_number', 'password', 'email']
 
-@admin.register(models.Video)
-class VideoAdmin(admin.ModelAdmin):
 
-    list_display = ['name', 'created_at']
-    fields = ['name', 'created_at']
+class SongModelAdmin(admin.ModelAdmin):
 
-@admin.register(models.ChatGroup)
-class GroupAdmin(admin.ModelAdmin):
-
-    list_display = ['group_name', 'last_updated']
-    fields = ['group_name', 'last_updated']
+    list_display = ['song_name', '']
+    fields = ('song_name',)
 
 
 
