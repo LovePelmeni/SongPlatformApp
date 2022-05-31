@@ -18,7 +18,6 @@ class DistributedTransactionFailed(BaseException):
         logger.debug('[DISTRIBUTED EXCEPTION]: %s: %s' % (self.exception_name, self.reason))
 
 
-
 class CustomerDistributedTransactionHandler(object):
 
     def __init__(self, customer_data: typing.Optional[dict], query_params: typing.Optional[dict],
@@ -29,7 +28,6 @@ class CustomerDistributedTransactionHandler(object):
         self.query_params = query_params
         self.method = method
         self.session = requests.Session()
-
 
     @transaction.atomic
     def execute_transaction(self):

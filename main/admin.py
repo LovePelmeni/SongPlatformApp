@@ -11,7 +11,7 @@ class UserModelAdmin(admin.ModelAdmin):
 
 class SongModelAdmin(admin.ModelAdmin):
 
-    list_display = ['song_name', '']
+    list_display = ['song_name',]
     fields = ('song_name',)
 
 

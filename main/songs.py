@@ -1,27 +1,40 @@
 import django.core.exceptions
 from rest_framework import generics, viewsets, mixins, decorators, status
-from . import models, permissions
+from . import models, permissions, authentication
 import django.http
 from django.views.decorators import http, cache, csrf
 from django.db import transaction
 
 
-class SongCatalogViewSet(viewsets.ModelViewSet):
+class SongFreeCatalogViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = models.Song.objects.all()
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (authentication.UserAuthenticationClass,)
+
+
+    def get_queryset(self):
+        return self.filter_queryset(queryset=self.queryset)
 
     @decorators.action(methods=['get'], detail=True, description='Obtain Single Song Object.')
     def retrieve(self, request, *args, **kwargs):
         try:
-            self.object = models.Song.objects.get(id=request.query_params.get('song_id'))
+            self.object = self.get_queryset().get(id=request.query_params.get('song_id'))
             return super().retrieve(request, *args, **kwargs)
         except(django.core.exceptions.ObjectDoesNotExist,):
             return django.http.HttpResponseNotFound()
 
     @decorators.action(methods=['get'], detail=False, description='Obtain Song Queryset.')
     def list(self, request, *args, **kwargs):
-        self.queryset = models.Song.objects.all()
+        self.queryset = self.get_queryset()
         return super().list(request, *args, **kwargs)
+
+    def filter_queryset(self, queryset):
+        return queryset.filter(len(F('subscriptions')) < 1)
+
+
+class SongPaidCatalogView(viewsets.ReadOnlyModelViewSet):
+    pass
 
 
 
@@ -70,6 +83,7 @@ class SongOwnerGenericView(generics.GenericAPIView):
 
             if serializers.is_valid(raise_exception=True):
                 if 'preview' in request.FILES.keys():
+
                     file_link = aws_s3.files_api._save_to_aws(
                     bucket_name=getattr(settings, 'SONG_AUDIO_BUCKET_NAME'), file=request.FILES.get('preview'))
                     serializer.validated_data.update({'preview': file_link})
@@ -79,12 +93,6 @@ class SongOwnerGenericView(generics.GenericAPIView):
 
                 song.save()
                 return django.http.HttpResponse()
-
-        except(djagno.core.exceptions.ValidationError,) as exception:
-            raise exception
-
-        except(django.core.exceptions.ObjectDoesNotExist,) as exception:
-            raise exception
 
         except() as exception:
             transaction.rollback()

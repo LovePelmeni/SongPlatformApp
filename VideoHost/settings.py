@@ -57,9 +57,6 @@ AUTHENTICATION_BACKENDS = (
     'xmpp_backends.django.auth_backends.XmppBackendBackend'
 )
 
-CACHE = {
-
-}
 
 MIDDLEWARE = [
 
@@ -74,8 +71,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    # 'main.middlewares.CheckAuthUserMiddleware',
-
+    'main.middlewares.CheckAuthUserMiddleware',
+    'main.middlewares.CheckBlockedUserMiddleware'
 ]
 
 ROOT_URLCONF = 'VideoHost.urls'
@@ -154,6 +151,42 @@ if not DEBUG:
             },
         }}
 
+    RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST')
+    RABBITMQ_USER = os.environ.get('RABBITMQ_USER')
+    RABBITMQ_PASSWORD = os.environ.get('REDIS_PASSWORD')
+    RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT')
+    RABBITMQ_VHOST = os.environ.get('RABBITMQ_VHOST')
+
+    CACHE = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.RedisCache',
+            'LOCATION': 'http://%s:6379' % os.environ.get('REDIS_HOST')
+        }
+    }
+
+    AWS_SONG_BUCKET_NAME = os.environ.get('AWS_SONG_BUCKET_NAME')
+    AWS_PREVIEWS_BUCKET_NAME = os.environ.get('AWS_PREVIEWS_BUCKET_NAME')
+    AWS_AVATARS_BUCKET_NAME = os.environ.get('AWS_AVATARS_BUCKET_NAME')
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN')
+
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+
+    AWS_STATIC_LOCATION = 'static'
+    STATICFILES_STORAGE = 'main.aws_s3.storage_backends.StaticStorage'
+    AWS_STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
+
+    AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
+    DEFAULT_FILE_STORAGE = 'main.aws_s3.storage_backends.PublicMediaStorage'
+
+    AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
+    PRIVATE_FILE_STORAGE = 'main.aws_s3.storage_backends.PrivateMediaStorage'
+
+
 else:
 
     DATABASES = {
@@ -179,6 +212,42 @@ else:
                 "hosts": [('127.0.0.1', 6379)],
             },
         }}
+
+    CACHE = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+
+    AWS_SONG_BUCKET_NAME = ''
+    AWS_PREVIEWS_BUCKET_NAME = ''
+    AWS_AVATARS_BUCKET_NAME = ''
+    AWS_ACCESS_KEY_ID = ''
+
+    AWS_SECRET_ACCESS_KEY = ''
+    AWS_S3_CUSTOM_DOMAIN = ''
+
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+
+    AWS_STATIC_LOCATION = 'static'
+    STATICFILES_STORAGE = 'main.aws_s3.storage_backends.StaticStorage'
+    AWS_STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
+
+    AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
+    DEFAULT_FILE_STORAGE = 'main.aws_s3.storage_backends.PublicMediaStorage'
+
+    AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
+    PRIVATE_FILE_STORAGE = 'main.aws_s3.storage_backends.PrivateMediaStorage'
+
+
+    RABBITMQ_HOST = 'rabbitmqserver'
+    RABBITMQ_USER = 'rabbitmq_user'
+    RABBITMQ_PASSWORD = 'rabbitmq_password'
+    RABBITMQ_PORT = 5671
+    RABBITMQ_VHOST = 'rabbitmq_vhost'
+
 
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -211,12 +280,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# AWS_IMAGES_BUCKET_NAME = ''
-# AWS_VIDEOS_BUCKET_NAME = ''
+# AWS_SONG_BUCKET_NAME = ''
+# AWS_PREVIEWS_BUCKET_NAME = ''
+# AWS_AVATARS_BUCKET_NAME = ''
 # AWS_ACCESS_KEY_ID = ''
 #
 # AWS_SECRET_ACCESS_KEY = ''
-# AWS_STORAGE_BUCKET_NAME = ''
 # AWS_S3_CUSTOM_DOMAIN = ''
 #
 # AWS_S3_OBJECT_PARAMETERS = {

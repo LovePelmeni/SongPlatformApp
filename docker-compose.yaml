@@ -61,7 +61,6 @@ services:
 
     depends_on:
       - database
-      - rabbitmq
       - redis
       - chat_web_service
 
@@ -79,3 +78,5 @@ networks:
   main_app_network:
     external: true
     name: global_application_network
+
+

@@ -28,3 +28,17 @@ class SongForm(forms.ModelForm):
         model = models.Song
         fields = ('preview', 'song_name', 'song_description', 'audio_file')
 
+class EditSongForm(SongForm):
+
+    def __init__(self, **kwargs):
+        del self.fields['audio_file']
+        super(EditSongForm, self).__init__(**kwargs)
+
+class SetSubscriptionForm(forms.Form):
+
+    subscription = forms.ChoiceField(label='Subscription', required=True)
+    songs = forms.ModelMultipleChoiceField(label='Subscriptions', queryset=None, required=True)
+
+
+
+

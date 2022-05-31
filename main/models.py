@@ -135,4 +135,5 @@ class Song(models.Model):
         self.etag = etag
         self.save()
 
-
+    def has_permission(self, user):
+        pass

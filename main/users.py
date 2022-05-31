@@ -81,28 +81,36 @@ class EditUserAPIView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.UserAuthenticationClass, )
 
+    def handle_exception(self, exc):
+        if isinstance(exc, django.db.IntegrityError) or isinstance(exc, django.db.ProgrammingError):
+            return django.http.HttpResponseServerError()
+
 
     @cache.cache_page(60 * 5)
     def get(self, request):
         return django.template.response.TemplateResponse(request, 'main/edit_profile.html',
         context={'form': forms.EditUserForm(initial={elem: value for elem, value in request.user.__dict__.items()})})
 
-
+    @csrf.requires_csrf_token
     @transaction.atomic
     def put(self, request):
-        form = forms.EditUserForm(request.data)
+        try:
+            form = forms.EditUserForm(request.data)
+            if form.has_changed():
+                if 'avatar_image' in form.changed_data:
+                    request.user.apply_new_avatar(avatar=form.cleaned_data['avatar'])
 
-        for elem, value in request.data.items():
-            request.user.__setattr__(elem, value)
+                if 'password' in form.changed_data:
+                    request.user.set_password(form.cleaned_data['password'])
 
-        if 'avatar_image' in form.changed_data:
-            request.user.apply_new_avatar(avatar=form.cleaned_data['avatar'])
+                for elem, value in request.data.items():
+                    request.user.__setattr__(elem, value)
 
-        if 'password' in form.changed_data:
-            request.user.set_password(form.cleaned_data['password'])
-
-        request.user.save()
-        return django.http.HttpResponse(status=200)
+                request.user.save()
+            return django.http.HttpResponse(status=200)
+        except(django.db.IntegrityError, django.db.ProgrammingError,) as exception :
+            transaction.rollback()
+            raise exception
 
 
 import django.template.response
@@ -111,7 +119,7 @@ from django.conf import settings
 
 @decorators.action(methods=['get', 'head'], detail=True)
 @decorators.permission_classes([permissions.IsAuthenticated, ])
-@decorators.authentication_classes([authentication.UserAuthenticationClass])
+@decorators.authentication_classes([authentication.UserAuthenticationClass,])
 def get_user_profile(request):
 
     user_id = jwt.decode(request.get_signed_cookie('jwt-token'),
@@ -146,6 +154,4 @@ class LoginAPIView(views.APIView):
 
             return response
         return django.http.HttpResponse(status=400)
-
-
 

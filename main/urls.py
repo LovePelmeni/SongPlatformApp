@@ -11,8 +11,12 @@ urlpatterns = []
 songs_urlpatterns = [
 
     path('song/', songs.SongOwnerGenericView.as_view(), name='song'),
-    path('catalog/all/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
-    path('get/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
+    path('free/catalog/all/songs/', songs.SongFreeCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
+    path('paid/catalog/all/songs/', songs.SongPaidCatalogView.as_view({'get': 'list'}), name='all-paid-songs'),
+
+    path('get/free/song/', songs.SongFreeCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
+    path('get/paid/song/', songs.SongPaidCatalogView.as_view({'get': 'retrieve'}), name='get-song'),
+
     path('set/song/permission/', song_permissions.SongPermissions.as_view({'post': 'create'}), name='set-song-permission'),
     path('unset/song/permission/', song_permissions.SongPermissions.as_view({'delete': 'destroy'}), name='unset-song-permission')
 
