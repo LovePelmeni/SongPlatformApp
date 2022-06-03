@@ -19,12 +19,10 @@ services:
   database:
     build: ./postgres/.
     container_name: main_app_postgresql_container
-
     environment:
       POSTGRES_DB: main_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Kirill
-
     ports:
       - 5436:5436
     command:
@@ -58,17 +56,15 @@ services:
     container_name: project_container
     ports:
       - 8000:8000
-
     depends_on:
       - database
       - redis
       - chat_web_service
-
     healthcheck:
       timeout: 10s
       retries: 5
       interval: 10s
-      test: [ "CMD", "curl", "http://localhost:8000/healthcheck/"]
+      test: ["CMD", "curl", "http://localhost:8000/healthcheck/"]
     env_file:
       - ./env_file.env
     networks:
@@ -78,5 +74,4 @@ networks:
   main_app_network:
     external: true
     name: global_application_network
-
 

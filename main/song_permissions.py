@@ -6,6 +6,7 @@ class SongPermissions(viewsets.ModelViewSet):
     permission_classes = (permissions.HasSongPermission,)
 
     def handle_exception(self, exception):
+
         return django.http.HttpResponseNotFound() if exception.__class__.__name__ in (
         django.core.exceptions.ObjectDoesNotExist.__class__.__name__, AttributeError.__class__.__name__) else \
         django.http.HttpResponseServerError()
@@ -21,7 +22,7 @@ class SongPermissions(viewsets.ModelViewSet):
             raise exception
 
     @decorators.action(methods=['delete'], detail=False)
-    def destroy(self, request,):
+    def destroy(self, request):
         try:
             song = models.Song.objects.filter(id=request.query_params.get('song_id')).first()
             user = models.APICustomer.objects.get(id=request.query_params.get('customer_id'))
@@ -29,7 +30,5 @@ class SongPermissions(viewsets.ModelViewSet):
             return django.http.HttpResponse(status=200)
         except(django.core.exceptions.ObjectDoesNotExist, AttributeError,) as exception:
             raise exception
-
-
 
 

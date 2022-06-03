@@ -10,15 +10,20 @@ urlpatterns = []
 
 songs_urlpatterns = [
 
+    path('top/week/songs/', songs.TopWeekSongsAPIView.as_view(), name='top-week-songs'),
     path('song/', songs.SongOwnerGenericView.as_view(), name='song'),
-    path('free/catalog/all/songs/', songs.SongFreeCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
-    path('paid/catalog/all/songs/', songs.SongPaidCatalogView.as_view({'get': 'list'}), name='all-paid-songs'),
 
-    path('get/free/song/', songs.SongFreeCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
-    path('get/paid/song/', songs.SongPaidCatalogView.as_view({'get': 'retrieve'}), name='get-song'),
+    path('free/catalog/all/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
+    path('get/free/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
 
     path('set/song/permission/', song_permissions.SongPermissions.as_view({'post': 'create'}), name='set-song-permission'),
     path('unset/song/permission/', song_permissions.SongPermissions.as_view({'delete': 'destroy'}), name='unset-song-permission')
+
+]
+subscription_urlpatterns = [
+
+]
+album_urlpatterns = [
 
 ]
 
@@ -47,6 +52,8 @@ healthcheck_patterns = [
 urlpatterns += customer_patterns
 urlpatterns += songs_urlpatterns
 urlpatterns += block_patterns
+urlpatterns += subscription_urlpatterns
+urlpatterns += album_urlpatterns
 urlpatterns += healthcheck_patterns
 
 
@@ -72,6 +79,8 @@ openapi_urlpatterns_schema = [
 ]
 
 urlpatterns += openapi_urlpatterns_schema
+
+
 
 
 

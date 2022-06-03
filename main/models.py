@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 
@@ -7,10 +9,12 @@ import typing, requests, json
 from . import distributed_transaction_checker
 from .aws_s3 import exceptions
 import django.dispatch
+
 from django import db
 import pydantic
+from django.core import validators, exceptions
 
-transaction_checker = distributed_transaction_checker.CustomerDistributedTransactionHandler
+transaction_checker = distributed_transaction_checker.DistributedTransactionHandler
 
 
 class PhoneNumberField(models.CharField):
@@ -18,6 +22,12 @@ class PhoneNumberField(models.CharField):
     def __init__(self, **kwargs):
         self.max_length = kwargs.get('max_length')
         super(PhoneNumberField, self).__init__(**kwargs)
+
+    def validate(self, value, instance):
+        for regex in self.phone_number_regexes:
+            if re.match(pattern=regex, string=value):
+                return value
+        raise django.core.exceptions.ValidationError(message='Invalid Phone Number')
 
     def db_type(self, connection):
         return 'char(%s)' % 100
@@ -30,7 +40,8 @@ class CustomManager(BaseUserManager):
 
     def create_user(self, **kwargs):
         try:
-            user = distributed_transaction_checker.CustomerDistributedTransactionHandler(**kwargs)
+            user = self.model(**kwargs)
+            transaction_checker(**kwargs).execute_create()
             user.set_password(raw_password=kwargs.get('password'))
             user.save(using=self._db)
             return user
@@ -87,37 +98,22 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def delete(self, using=None, **kwargs):
         try:
-            distributed_transaction_checker.CustomerDistributedTransactionHandler(
-            method='delete', url='delete/customer/', customer_data=None, query_params=None).execute_transaction()
+            distributed_transaction_checker.DistributedTransactionHandler(
+            method='delete', url='delete/customer/', data=None, query_params=None).execute_delete()
             return super().delete(using=using, **kwargs)
 
         except() as exception:
-            logger.debug('could not create user xmpp profile: [%s]' % exception)
-            raise exceptions.XMPPUserDeleteFailed()
+            raise exception
 
-
-
-from django.conf import settings
-class SongManager(models.Manager):
-
-    def create(self, **kwargs):
-        model = self.model(**kwargs)
-        return model
-
-class Subscription(pydantic.BaseModel):
-
-    subscription_id: int
-    subscription_name: str
-    amount: str
 
 class Song(models.Model):
 
-    objects = SongManager()
-    subscription: typing.Optional[Subscription]
-    etag: typing.Optional[str]
+    objects = models.Manager()
 
-    owner = models.ManyToManyField(CustomUser, related_name='songs', null=True)
+    has_subscription = models.BooleanField(verbose_name='Has Subscription song.', null=False, default=False)
+    owners = models.ManyToManyField(CustomUser, related_name='songs', null=True)
     preview = models.CharField(verbose_name='AWS Preview File link', max_length=100, null=True)
+
     song_name = models.CharField(verbose_name='Song Name', null=False, max_length=100)
     song_description = models.TextField(verbose_name='Song Description', null=True, max_length=100)
     audio_file = models.CharField(verbose_name='AWS Audio File Link', null=False, max_length=300)
@@ -136,4 +132,63 @@ class Song(models.Model):
         self.save()
 
     def has_permission(self, user):
+        import django.core.exceptions
+        if user in self.owners.all():
+            return True
+        raise django.core.exceptions.PermissionDenied()
+
+
+class SubscriptionManager(models.Manager):
+
+    def create(self, **kwargs):
+        try:
+            with db.transaction.atomic():
+                subscription = self.model(**kwargs)
+                transaction_checker(data=kwargs, method='post',
+                query_params=None, url='/create/subscription/').execute_create()
+                return subscription
+
+        except(NotImplementedError,) as exception:
+            logger.error('Failed To Create Subscription: %s' % exception)
+            raise NotImplementedError
+
+    def update(self, **kwargs):
         pass
+
+    def delete(self, **kwargs):
+        try:
+            assert 'subscription_id' in kwargs.items()
+            with db.transaction.atomic():
+                transaction_checker(data=None, method='delete',
+                query_params={'subscription_id': kwargs.get('subscription_id')},
+                url='delete/subscription/').execute_delete()
+
+        except(AssertionError, NotImplementedError):
+            raise NotImplementedError
+
+
+currency = [
+    ('RUB', 'rub'),
+    ('USD', 'usd'),
+    ('EUR', 'eur')
+]
+
+class Subscription(models.Model):
+
+    objects = SubscriptionManager()
+
+    owners = models.ManyToManyField(to=CustomUser, on_delete=models.PROTECT)
+    subscription_name = models.CharField(verbose_name='Subscription Name', max_length=100)
+
+    songs = models.ForeignKey(to=Song, null=True, on_delete=models.PROTECT, related_name='subscription')
+    amount = models.IntegerField(verbose_name='Amount', null=False)
+    currency = models.CharField(choices=currency, verbose_name='Currency', null=False, max_length=100)
+
+    def __str__(self):
+        return self.subscription_name
+
+    def has_permission(self, user):
+        return user in self.owners.all()
+
+
+

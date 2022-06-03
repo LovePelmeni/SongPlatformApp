@@ -115,19 +115,26 @@ class EditUserAPIView(views.APIView):
 
 import django.template.response
 from django.conf import settings
+from django.utils import decorators
 
+class CustomerProfileAPIView(views.APIView):
 
-@decorators.action(methods=['get', 'head'], detail=True)
-@decorators.permission_classes([permissions.IsAuthenticated, ])
-@decorators.authentication_classes([authentication.UserAuthenticationClass,])
-def get_user_profile(request):
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (authentication.UserAuthenticationClass,)
 
-    user_id = jwt.decode(request.get_signed_cookie('jwt-token'),
-    key=getattr(settings, 'SECRET_KEY'), algorithms='HS256').get('user_id')
+    @decorators.method_decorator(cache.never_cache)
+    def get(self, request):
+        try:
+            user_id = jwt.decode(request.get_signed_cookie('jwt-token'),
+            key=getattr(settings, 'SECRET_KEY'), algorithms='HS256').get('user_id')
 
-    user = models.CustomUser.objects.filter(id=user_id).first()
-    return django.http.JsonResponse(request, template='main/profile.html',
-    context={'user': user})
+            user = models.CustomUser.objects.filter(id=user_id).first()
+            return django.http.JsonResponse(request, template='main/profile.html',
+            context={'user': user})
+
+        except(KeyError, ):
+            return django.http.HttpResponse(
+            status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 from django.contrib.auth import\
@@ -136,7 +143,10 @@ authenticate, login
 
 class LoginAPIView(views.APIView):
 
-    permission_classes = (permissions.AllowAny,)
+    def check_permissions(self, request):
+        if 'jwt-token' in request.COOKIES.keys() or request.user.is_authenticated:
+            return django.core.exceptions.PermissionDenied()
+        return True
 
     @cache.cache_page(timeout=60 * 5)
     def get(self, request):
@@ -154,6 +164,4 @@ class LoginAPIView(views.APIView):
 
             return response
         return django.http.HttpResponse(status=400)
-
-
 

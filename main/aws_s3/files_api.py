@@ -38,7 +38,7 @@ def _get_file_aws_file(bucket_name, file_link: str):
 def _save_file_to_aws(file, bucket_name):
     """This method saves video to aws platform...."""
     import os
-    file_unique_name = os.path.splitext(file.name)[0] + '-%s' % datetime.datetime.now() + request.user.id
+    file_unique_name = os.path.splitext(file.name)[0] + '-%s' % datetime.datetime.now()
     boto3.resource('s3').Bucket(bucket_name).upload_file(
     filename=file_unique_name, filetype=file.content_type)
     logger.debug('file has been uploaded... %s, time: %s' % (file.name, datetime.datetime.now()))

@@ -8,11 +8,17 @@ class UserModelAdmin(admin.ModelAdmin):
     list_display = ['username', 'phone_number', 'password', 'email']
     fields = ['username', 'phone_number', 'password', 'email']
 
-
+@admin.register(models.Song)
 class SongModelAdmin(admin.ModelAdmin):
 
-    list_display = ['song_name',]
-    fields = ('song_name',)
+    list_display = ('song_name', 'song_description',)
+    fields = ('song_name', 'song_description',)
+
+@admin.register(models.Subscription)
+class SubscriptionModelAdmin(admin.ModelAdmin):
+
+    list_display = ()
+    fields = ()
 
 
 

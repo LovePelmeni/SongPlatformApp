@@ -6,7 +6,7 @@ from django.views.decorators import http, cache, csrf
 from django.db import transaction
 
 
-class SongFreeCatalogViewSet(viewsets.ReadOnlyModelViewSet):
+class SongCatalogViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = models.Song.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
@@ -33,9 +33,46 @@ class SongFreeCatalogViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset.filter(len(F('subscriptions')) < 1)
 
 
-class SongPaidCatalogView(viewsets.ReadOnlyModelViewSet):
-    pass
+    @decorators.permission_classes([api_permissions.HasSongPermission,])
+    @decorators.action(methods=['get'], detail=True)
+    def paid_retrieve(self, request):
+        import django.core.serializers.json
+        song = models.Song.objects.filter(has_subscription=True, id=request.query_params.get('song_id')).first()
+        return django.http.HttpResponse(status=200, content=json.dumps({'song': song.values()},
+        cls=django.core.serializers.json.DjangoJSONEncoder), content_type='application/json')
 
+
+    @decorators.permission_classes([api_permissions.HasSongPermission,])
+    @decorators.action(methods=['get'], detail=False)
+    def paid_list(self, request):
+        queryset = self.get_queryset() + models.Song.objects.filter(has_subscription=True)
+        return django.http.HttpResponse(json.dumps({'queryset': queryset},
+        cls=django.core.serializers.DjangoJSONEncoder), status=200)
+
+
+class TopWeekSongsAPIView(generics.GenericAPIView):
+
+    permission_classes = (permissions.AllowAny,)
+    queryset = models.Song.objects.all()
+
+    def get_most_viewed_queryset(self) -> typing.List[dict]:
+        """
+        / * returns most listened songs during this week.
+        // * joins with Song queryset by song ID.
+        """
+        from django.db import models as db_models
+        general_query = self.get_queryset().raw('SELECT * FROM Song JOIN '
+        # / * join implementation between Song and their statistic
+        'SELECT * FROM StatSong ORDER BY views DESC LIMIT 10 ON Song.id=StatSong.id').annotate(
+        views_count=db_models.F('views')).order_by('-views_count')[:10]
+        return db_models.QuerySet(general_query)
+
+    @cache.cache_page(timeout=60 * 5)
+    def get(self, request):
+        parsed_queryset = self.get_most_viewed_queryset()
+        return django.http.HttpResponse(
+        data=json.dumps({'queryset': parsed_queryset.values()},
+        cls=django.core.serializers.json.DjangoJSONEncoder), status=200)
 
 
 class SongOwnerGenericView(generics.GenericAPIView):

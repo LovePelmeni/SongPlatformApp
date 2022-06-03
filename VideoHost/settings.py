@@ -132,7 +132,7 @@ if not DEBUG:
             'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
             'HOST': os.environ.get('POSTGRES_HOST'),
             'PORT': os.environ.get('POSTGRES_PORT')
-        }
+        },
     }
 
     CORS_ALLOWED_ORIGINS = [
@@ -151,16 +151,13 @@ if not DEBUG:
             },
         }}
 
-    RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST')
-    RABBITMQ_USER = os.environ.get('RABBITMQ_USER')
-    RABBITMQ_PASSWORD = os.environ.get('REDIS_PASSWORD')
-    RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT')
-    RABBITMQ_VHOST = os.environ.get('RABBITMQ_VHOST')
-
     CACHE = {
         'default': {
             'BACKEND': 'django.core.cache.backends.RedisCache',
-            'LOCATION': 'http://%s:6379' % os.environ.get('REDIS_HOST')
+            'LOCATION': 'http://%s:6379' % os.environ.get('REDIS_HOST'),
+            'OPTIONS': {
+                'PASSWORD': os.environ.get('REDIS_PASSWORD')
+            }
         }
     }
 
@@ -199,8 +196,7 @@ else:
             'PASSWORD': 'Kirill',
             'HOST': 'localhost',
             'PORT': 5434
-        }
-
+        },
     }
 
     CORS_ALLOW_ALL_ORIGINS = True
@@ -242,25 +238,8 @@ else:
     PRIVATE_FILE_STORAGE = 'main.aws_s3.storage_backends.PrivateMediaStorage'
 
 
-    RABBITMQ_HOST = 'rabbitmqserver'
-    RABBITMQ_USER = 'rabbitmq_user'
-    RABBITMQ_PASSWORD = 'rabbitmq_password'
-    RABBITMQ_PORT = 5671
-    RABBITMQ_VHOST = 'rabbitmq_vhost'
-
-
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Europe/London'
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -308,7 +287,3 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'main/static/images/')
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-
-

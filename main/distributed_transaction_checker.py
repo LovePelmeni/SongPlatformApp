@@ -1,8 +1,9 @@
 from __future__ import annotations
-
 import typing
+
 from django.conf import settings
 from django.db import transaction
+
 import django.http, logging
 from django.middleware import csrf
 
@@ -18,35 +19,58 @@ class DistributedTransactionFailed(BaseException):
         logger.debug('[DISTRIBUTED EXCEPTION]: %s: %s' % (self.exception_name, self.reason))
 
 
-class CustomerDistributedTransactionHandler(object):
+class DistributedTransactionHandler(object):
 
-    def __init__(self, customer_data: typing.Optional[dict], query_params: typing.Optional[dict],
-    method: typing.Literal["delete", "post"], url: typing.Literal["create/customer/", "delete/customer/"]):
+    def __init__(self,
 
-        self.customer_data = customer_data
+    data: typing.Optional[dict],
+    query_params: typing.Optional[dict],
+    method: typing.Literal["delete", "post"],
+    url: str):
+
+        self.data = data
         self.transaction_entry_url = url
         self.query_params = query_params
         self.method = method
         self.session = requests.Session()
 
+    def execute_request(self):
+        response = self.session.request(
+            url='http://' + settings.PAYMENT_SERVICE_HOST + '8081/' + self.transaction_entry_url,
+            timeout=50, headers={'CSRF-Token': csrf._get_new_csrf_string()}, method=self.method,
+            params=self.query_params)
+        response.raise_for_status()
+
     @transaction.atomic
-    def execute_transaction(self):
+    def execute_delete(self):
+        try:
+            self.execute_request()
+        except(requests.exceptions.Timeout):
+            logger.error('Payment Service Did not responded. On Delete.')
+            transaction.rollback()
+            raise DistributedTransactionFailed(exception_name=exception.__class__.__name__,
+            reason=exception.args)
+
+    @transaction.atomic
+    def execute_update(self):
+        pass
+
+    @transaction.atomic
+    def execute_create(self):
         import requests
         try:
-            user = models.Customer.objects.create(**self.customer_data)
-            response = self.session.request(
-            url='http://' + settings.PAYMENT_SERVICE_HOST + '8081/' + self.transaction_entry_url,
-            timeout=50, headers={'CSRF-Token': csrf._get_new_csrf_string()}, method=self.method, params=self.query_params)
-            response.raise_for_status()
-            return user
+            self.execute_request()
         except(requests.exceptions.Timeout,):
-            logger.error('Payment Service Did not responded.')
+            logger.error('Payment Service Did not responded. On Create.')
 
         except() as exception:
             logger.debug('[DISTRIBUTED EXCEPTION]')
             transaction.rollback()
             raise DistributedTransactionFailed(exception_name=exception.__class__.__name__,
             reason=exception.args)
+
+
+
 
 
 
