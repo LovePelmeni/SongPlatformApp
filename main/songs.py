@@ -1,6 +1,6 @@
 import django.core.exceptions
-from rest_framework import generics, viewsets, mixins, decorators, status
-from . import models, permissions, authentication
+from rest_framework import generics, viewsets, mixins, decorators, status, permissions
+from . import models, authentication, permissions as api_permissions
 import django.http
 from django.views.decorators import http, cache, csrf
 from django.db import transaction
@@ -41,7 +41,7 @@ class SongPaidCatalogView(viewsets.ReadOnlyModelViewSet):
 class SongOwnerGenericView(generics.GenericAPIView):
 
     queryset = models.Song.objects.all()
-    permissions = (permissions.HasSongPermission,)
+    permissions = (api_permissions.HasSongPermission,)
 
 
     def get_song_etag(self, request):

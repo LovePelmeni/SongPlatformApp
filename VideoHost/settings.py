@@ -71,8 +71,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'main.middlewares.CheckAuthUserMiddleware',
-    'main.middlewares.CheckBlockedUserMiddleware'
+    # 'main.middlewares.CheckAuthUserMiddleware',
+    # 'main.middlewares.CheckBlockedUserMiddleware'
 ]
 
 ROOT_URLCONF = 'VideoHost.urls'
@@ -279,28 +279,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-# AWS_SONG_BUCKET_NAME = ''
-# AWS_PREVIEWS_BUCKET_NAME = ''
-# AWS_AVATARS_BUCKET_NAME = ''
-# AWS_ACCESS_KEY_ID = ''
-#
-# AWS_SECRET_ACCESS_KEY = ''
-# AWS_S3_CUSTOM_DOMAIN = ''
-#
-# AWS_S3_OBJECT_PARAMETERS = {
-#     'CacheControl': 'max-age=86400',
-# }
-#
-# AWS_STATIC_LOCATION = 'static'
-# STATICFILES_STORAGE = 'main.aws_s3.storage_backends.StaticStorage'
-# AWS_STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
-#
-# AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
-# DEFAULT_FILE_STORAGE = 'main.aws_s3.storage_backends.PublicMediaStorage'
-#
-# AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
-# PRIVATE_FILE_STORAGE = 'main.aws_s3.storage_backends.PrivateMediaStorage'
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/

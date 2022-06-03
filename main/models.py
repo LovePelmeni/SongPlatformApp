@@ -10,7 +10,7 @@ import django.dispatch
 from django import db
 import pydantic
 
-transaction_checker = distributed_transaction_checker.DistributedTransactionHandler
+transaction_checker = distributed_transaction_checker.CustomerDistributedTransactionHandler
 
 
 class PhoneNumberField(models.CharField):
