@@ -1,6 +1,7 @@
-FROM python:3.8.13-buster
+FROM ubuntu:18.04
 
 WORKDIR /project/app/
+
 ENV PYTHONUNBUFFERED=1
 RUN pip --upgrade pip
 COPY ./requirements.txt requirements.txt

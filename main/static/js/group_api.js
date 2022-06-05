@@ -47,4 +47,3 @@ function CheckForIdentityGroup(group=null){
         return EditGroup(group);
     }
 }
-

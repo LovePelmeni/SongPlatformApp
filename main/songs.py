@@ -65,7 +65,7 @@ class TopWeekSongsAPIView(generics.GenericAPIView):
         # / * join implementation between Song and their statistic
         'SELECT * FROM StatSong ORDER BY views DESC LIMIT 10 ON Song.id=StatSong.id').annotate(
         views_count=db_models.F('views')).order_by('-views_count')[:10]
-        return db_models.QuerySet(general_query)
+        return db_models.QuerySet(query=general_query)
 
     @cache.cache_page(timeout=60 * 5)
     def get(self, request):
@@ -109,7 +109,6 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except(django.core.exceptions.ObjectDoesNotExist,) as exception:
             raise exception
 
-
     @transaction.atomic
     @http.etag(etag_func=get_song_etag)
     @csrf.requires_csrf_token
@@ -129,7 +128,7 @@ class SongOwnerGenericView(generics.GenericAPIView):
                     song.__setattr__(elem, value)
 
                 song.save()
-                return django.http.HttpResponse()
+                return django.http.HttpResponse(status=200)
 
         except() as exception:
             transaction.rollback()
@@ -149,6 +148,7 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
+
 
 
 

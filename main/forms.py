@@ -42,6 +42,13 @@ class SetSubscriptionForm(forms.Form):
     subscription = forms.ModelChoiceField(label='Subscription', queryset=None, required=True)
     songs = forms.ModelMultipleChoiceField(label='Subscriptions', queryset=None, required=True)
 
+
+class AlbumForm(forms.ModelForm):
+
+    class Meta:
+        model = models.Album
+        fields = ()
+
 class SubscriptionForm(forms.Form):
 
     class Meta:

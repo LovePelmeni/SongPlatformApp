@@ -82,5 +82,3 @@ urlpatterns += openapi_urlpatterns_schema
 
 
 
-
-

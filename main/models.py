@@ -191,4 +191,24 @@ class Subscription(models.Model):
         return user in self.owners.all()
 
 
+class Album(models.Model):
+
+    album_name = models.CharField(verbose_name='Album Name', max_length=100, null=False)
+    songs = models.ManyToManyField(verbose_name='Songs', null=True, to=Song)
+    owner = models.OneToOneField(verbose_name='Owner', null=False, to=CustomUser)
+    created_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.album_name
+
+
+class StatSong(models.Model):
+
+    song = models.OneToOneField(verbose_name='Song to track.', on_delete=models.CASCADE, null=False, to=Song)
+    views = models.IntegerField(verbose_name='Views')
+
+    def __str__(self):
+        return self.song.id
+
+
 

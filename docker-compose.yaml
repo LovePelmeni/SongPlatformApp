@@ -51,15 +51,12 @@ services:
     networks:
       - main_app_network
 
-  main_app:
+  song_app:
     build: .
     container_name: project_container
+    restart: unless-stopped
     ports:
       - 8000:8000
-    depends_on:
-      - database
-      - redis
-      - chat_web_service
     healthcheck:
       timeout: 10s
       retries: 5
@@ -67,6 +64,10 @@ services:
       test: ["CMD", "curl", "http://localhost:8000/healthcheck/"]
     env_file:
       - ./env_file.env
+    depends_on:
+      - database
+      - redis
+      - chat_web_service
     networks:
       - main_app_network
 
