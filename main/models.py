@@ -4,17 +4,13 @@ from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 
 from django.db import models
-import typing, requests, json
 
-from . import distributed_transaction_checker
-from .aws_s3 import exceptions
+# from .distributed_transactions import distributed_transaction_checker
 import django.dispatch
 
 from django import db
-import pydantic
 from django.core import validators, exceptions
-
-transaction_checker = distributed_transaction_checker.DistributedTransactionHandler
+from django.db import transaction
 
 
 class PhoneNumberField(models.CharField):
@@ -98,12 +94,19 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def delete(self, using=None, **kwargs):
         try:
-            distributed_transaction_checker.DistributedTransactionHandler(
-            method='delete', url='delete/customer/', data=None, query_params=None).execute_delete()
-            return super().delete(using=using, **kwargs)
+           pass
 
         except() as exception:
             raise exception
+
+    def distributed_create(self):
+        pass
+
+    def distributed_update(self):
+        pass
+
+    def distributed_delete(self):
+        pass
 
 
 class Song(models.Model):
@@ -137,35 +140,29 @@ class Song(models.Model):
             return True
         raise django.core.exceptions.PermissionDenied()
 
-
-class SubscriptionManager(models.Manager):
-
+class SubscriptionQueryset(models.QuerySet):
+    """
+    / * Queryset that represents subscription Model object
+    """
+    @transaction.atomic
     def create(self, **kwargs):
         try:
-            with db.transaction.atomic():
-                subscription = self.model(**kwargs)
-                transaction_checker(data=kwargs, method='post',
-                query_params=None, url='/create/subscription/').execute_create()
-                return subscription
-
-        except(NotImplementedError,) as exception:
-            logger.error('Failed To Create Subscription: %s' % exception)
+            model = self.model(**kwargs)
+            model.distributed_create()
+            return model
+        except(NotImplementedError,):
             raise NotImplementedError
 
+    @transaction.atomic
     def update(self, **kwargs):
         pass
 
-    def delete(self, **kwargs):
-        try:
-            assert 'subscription_id' in kwargs.items()
-            with db.transaction.atomic():
-                transaction_checker(data=None, method='delete',
-                query_params={'subscription_id': kwargs.get('subscription_id')},
-                url='delete/subscription/').execute_delete()
+    @transaction.atomic
+    def delete(self):
+        pass
 
-        except(AssertionError, NotImplementedError):
-            raise NotImplementedError
-
+class SubscriptionManager(db.models.manager.BaseManager.from_queryset(queryset_class=SubscriptionQueryset)):
+    pass
 
 currency = [
     ('RUB', 'rub'),
@@ -176,8 +173,9 @@ currency = [
 class Subscription(models.Model):
 
     objects = SubscriptionManager()
+    non_updated_fields = ('owner', 'amount', 'currency')
 
-    owners = models.ManyToManyField(to=CustomUser, on_delete=models.PROTECT)
+    owner = models.OneToOneField(to=CustomUser, on_delete=models.CASCADE)
     subscription_name = models.CharField(verbose_name='Subscription Name', max_length=100)
 
     songs = models.ForeignKey(to=Song, null=True, on_delete=models.PROTECT, related_name='subscription')
@@ -187,15 +185,34 @@ class Subscription(models.Model):
     def __str__(self):
         return self.subscription_name
 
+    def distributed_create(self, new_credentials: dict):
+        pass
+
+    def distributed_delete(self, fields=None):
+        pass
+
+    def distributed_update(self, updated_data: dict):
+        pass
+
     def has_permission(self, user):
         return user in self.owners.all()
+
+    def update_or_restrict(self, new_values: dict):
+        restricted_list = []
+        for elem, value in new_values.items():
+            if elem not in self.non_updated_fields:
+                self.__setattr__(elem, value)
+            else:
+                restricted_list.append(elem)
+        return restricted_list
+
 
 
 class Album(models.Model):
 
     album_name = models.CharField(verbose_name='Album Name', max_length=100, null=False)
     songs = models.ManyToManyField(verbose_name='Songs', null=True, to=Song)
-    owner = models.OneToOneField(verbose_name='Owner', null=False, to=CustomUser)
+    owner = models.OneToOneField(verbose_name='Owner', null=False, to=CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -204,11 +221,14 @@ class Album(models.Model):
 
 class StatSong(models.Model):
 
-    song = models.OneToOneField(verbose_name='Song to track.', on_delete=models.CASCADE, null=False, to=Song)
+    song = models.OneToOneField(verbose_name='Song to track.',
+    on_delete=models.CASCADE, null=False, to=Song, related_name='statistic')
     views = models.IntegerField(verbose_name='Views')
 
     def __str__(self):
         return self.song.id
+
+
 
 
 

@@ -1,8 +1,9 @@
 import django.utils.decorators
 from rest_framework import generics, status, authentication, permissions, viewsets
 
-from django.views.decorators import csrf
+from django.views.decorators import csrf, cache
 import django.http
+from . import authentication as api_auth
 
 from . import models, forms, authentication as auth
 import django.db.models
@@ -13,17 +14,56 @@ class SubscriptionGenericView(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (auth.UserAuthenticationClass,)
 
+    def handle_exception(self, exc):
+        if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
+            return django.http.HttpResponseNotFound()
+
     @csrf.requires_csrf_token
     def post(self, request):
-        pass
+
+        from . import aws_s3
+        serializer = serializers.SubscriptionSerializer(request.data, many=False)
+
+        if 'preview' in request.FILES.keys():
+            file_link = aws_s3.files_api._save_to_aws(bucket_name=getattr(
+            settings, 'BUCKET_PREVIEW_NAME'), file=request.FILES.get('preview'))
+            serializer.validated_data.update({'preview': file_link})
+
+        if serializer.is_valid(raise_exception=True):
+           models.Subscription.objects.create(
+           **serializer.validated_data)
+
+        logger.debug('new subscription has been created.')
+        return django.http.HttpResponse(status=status.HTTP_200_OK)
+
 
     @csrf.requires_csrf_token
     def put(self, request):
-        pass
+        subscription = models.Subscription.objects.get(id=request.query_params.get('subscription_id'))
+        serializer = serializers.SubscriptionSerializer(request.data, many=False)
+
+        if 'preview' in serializer.validated_data.keys():
+            # file_link = aws_s3.files_api._save_to_aws(bucket_name=getattr(
+            #
+            # settings, 'BUCKET_PREVIEW_NAME'), file=request.FILES.get('preview'))
+            serializer.validated_data.update({'preview': file_link})
+
+        if serializer.is_valid(raise_exception=True):
+            for obj, value in serializer.validated_data.items():
+                subscription.__setattr__(obj, value)
+
+        return django.http.HttpResponse(status=status.HTTP_200_OK)
+
 
     @csrf.requires_csrf_token
     def delete(self, request):
-        pass
+        try:
+            subscription_id = request.query_params.get('subscription_id')
+            models.Subscription.objects.delete(subscription_id=subscription_id)
+            return django.http.HttpResponse(status=status.HTTP_200_OK)
+
+        except(django.core.exceptions.ObjectDoesNotExist,) as exception:
+            raise exception
 
     @cache.cache_page(timeout=60 * 5)
     def get(self, request):
@@ -35,8 +75,8 @@ class SubscriptionGenericView(generics.GenericAPIView):
 class SubscriptionSongGenericView(generics.GenericAPIView):
 
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (authentication.UserAuthenticationClass,)
-    queryset = models.Song.object.all()
+    authentication_classes = (api_auth.UserAuthenticationClass,)
+    queryset = models.Song.objects.all()
 
     def handle_exception(self, exc):
 
@@ -48,7 +88,7 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
 
     @csrf.requires_csrf_token
     def post(self, request):
-        subscription = request.data.get('sub_id')
+        subscription = request.data.get('subscription_id')
         chosen_songs = django.db.models.QuerySet(model=models.Song,
         query=request.data.get('queryset'))
 
@@ -66,6 +106,7 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
         permission_form = forms.SetSubscriptionForm()
         permission_form.songs.update({'queryset': queryset})
         return django.http.HttpResponse({'form': permission_form}, status=status.HTTP_200_OK)
+
 
     @csrf.requires_csrf_token
     def delete(self, request):

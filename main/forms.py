@@ -47,9 +47,9 @@ class AlbumForm(forms.ModelForm):
 
     class Meta:
         model = models.Album
-        fields = ()
+        fields = '__all__'
 
-class SubscriptionForm(forms.Form):
+class SubscriptionForm(forms.ModelForm):
 
     class Meta:
         model = models.Subscription

@@ -65,10 +65,10 @@ class SongSerializer(serializers.ModelSerializer):
         model = models.Song
         fields = '__all__'
 
-
 class SongCreateSerializer(serializers.ModelSerializer):
-    pass
 
-
+    class Meta:
+        model = models.Song
+        fields = "__all__"
 
 

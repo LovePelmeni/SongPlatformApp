@@ -2,7 +2,7 @@ from . import views
 from django.urls import path
 from . import users
 from rest_framework import permissions
-from . import songs, song_permissions
+from . import songs, subscriptions, albums
 
 app_name = 'main'
 
@@ -16,15 +16,18 @@ songs_urlpatterns = [
     path('free/catalog/all/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
     path('get/free/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
 
-    path('set/song/permission/', song_permissions.SongPermissions.as_view({'post': 'create'}), name='set-song-permission'),
-    path('unset/song/permission/', song_permissions.SongPermissions.as_view({'delete': 'destroy'}), name='unset-song-permission')
-
 ]
 subscription_urlpatterns = [
+
+    path('/subscription/', subscriptions.SubscriptionGenericView.as_view(), name='subscription'),
+    path('/subscription/song/', subscriptions.SubscriptionSongGenericView.as_view(), name='subscription-song')
 
 ]
 album_urlpatterns = [
 
+    path('album/', albums.AlbumAPIView.as_view(), name='album'),
+    path('get/album/', albums.AlbumViewSet.as_view({'get': 'retrieve'}), name='get-album'),
+    path('get/albums/', albums.AlbumViewSet.as_view({'get': 'list'}), name='get-albums'),
 ]
 
 customer_patterns = [
@@ -35,7 +38,7 @@ customer_patterns = [
 
     path('create/user/', users.CreateUserAPIView.as_view(), name='create-user'),
     path('login/user/', users.LoginAPIView.as_view(), name='login-user'),
-    path('get/user/profile/', users.get_user_profile, name='get_user_profile'),
+    path('get/user/profile/', users.CustomerProfileAPIView.as_view(), name='get_user_profile'),
 ]
 
 block_patterns = [
@@ -79,6 +82,8 @@ openapi_urlpatterns_schema = [
 ]
 
 urlpatterns += openapi_urlpatterns_schema
+
+
 
 
 

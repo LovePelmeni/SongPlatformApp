@@ -47,3 +47,11 @@ class HasSongPermission(permissions.BasePermission):
 
 
 
+class IsAlbumOwner(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        try:
+            return request.user == models.Album.objects.filter(
+            id=request.query_params.get('album_id')).owner
+        except(django.core.exceptions.ObjectDoesNotExist,):
+            raise django.core.exceptions.PermissionDenied()

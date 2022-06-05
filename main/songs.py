@@ -1,7 +1,9 @@
 import django.core.exceptions
 from rest_framework import generics, viewsets, mixins, decorators, status, permissions
+
 from . import models, authentication, permissions as api_permissions
 import django.http
+
 from django.views.decorators import http, cache, csrf
 from django.db import transaction
 
@@ -13,43 +15,54 @@ class SongCatalogViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (authentication.UserAuthenticationClass,)
 
 
+    def handle_exception(self, exc):
+        if isinstance(exc, django.core.exceptions.PermissionDenied):
+            return django.http.HttpResponse(status=status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS)
+
+        if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
+            return django.core.exceptions.ObjectDoesNotExist
+        return django.http.HttpResponseServerError()
+
+
+    def check_object_permissions(self, request, song):
+        if not song in request.user.songs.all() \
+        or not song.subscrition in request.user.subscriptions.all():
+            raise django.core.exceptions.PermissionDenied()
+
     def get_queryset(self):
         return self.filter_queryset(queryset=self.queryset)
+
 
     @decorators.action(methods=['get'], detail=True, description='Obtain Single Song Object.')
     def retrieve(self, request, *args, **kwargs):
         try:
-            self.object = self.get_queryset().get(id=request.query_params.get('song_id'))
+            song = models.Song.objects.get(id=request.query_params.get('song_id'))
+            self.check_object_permissions(request=request, song=song)
             return super().retrieve(request, *args, **kwargs)
+
         except(django.core.exceptions.ObjectDoesNotExist,):
             return django.http.HttpResponseNotFound()
 
+        except(django.core.exceptions.PermissionDenied,):
+            return django.http.JsonResponse({'is_available': False})
+
+
     @decorators.action(methods=['get'], detail=False, description='Obtain Song Queryset.')
     def list(self, request, *args, **kwargs):
-        self.queryset = self.get_queryset()
+
+        from django.db import models as db_models
+        self.queryset = self.get_queryset().annotate(is_available=db_models.Case(
+        db_models.When(subscription__in=request.user.subscriptions.all(), then=True),
+
+        db_models.When(~db_models.Q(subscription__in=request.user.subscriptions.all()), then=False),
+        output_field=django.db.models.BooleanField()))
         return super().list(request, *args, **kwargs)
 
     def filter_queryset(self, queryset):
         return queryset.filter(len(F('subscriptions')) < 1)
 
 
-    @decorators.permission_classes([api_permissions.HasSongPermission,])
-    @decorators.action(methods=['get'], detail=True)
-    def paid_retrieve(self, request):
-        import django.core.serializers.json
-        song = models.Song.objects.filter(has_subscription=True, id=request.query_params.get('song_id')).first()
-        return django.http.HttpResponse(status=200, content=json.dumps({'song': song.values()},
-        cls=django.core.serializers.json.DjangoJSONEncoder), content_type='application/json')
-
-
-    @decorators.permission_classes([api_permissions.HasSongPermission,])
-    @decorators.action(methods=['get'], detail=False)
-    def paid_list(self, request):
-        queryset = self.get_queryset() + models.Song.objects.filter(has_subscription=True)
-        return django.http.HttpResponse(json.dumps({'queryset': queryset},
-        cls=django.core.serializers.DjangoJSONEncoder), status=200)
-
-
+import typing
 class TopWeekSongsAPIView(generics.GenericAPIView):
 
     permission_classes = (permissions.AllowAny,)
@@ -61,11 +74,12 @@ class TopWeekSongsAPIView(generics.GenericAPIView):
         // * joins with Song queryset by song ID.
         """
         from django.db import models as db_models
-        general_query = self.get_queryset().raw('SELECT * FROM Song JOIN '
+        # query = [query for query in self.get_queryset().select_related('statistic').order_by('-views')[:10]]
+        general_query = self.get_queryset().raw('SELECT * FROM main_song JOIN'
         # / * join implementation between Song and their statistic
-        'SELECT * FROM StatSong ORDER BY views DESC LIMIT 10 ON Song.id=StatSong.id').annotate(
-        views_count=db_models.F('views')).order_by('-views_count')[:10]
-        return db_models.QuerySet(query=general_query)
+        'SELECT * FROM main_statsong ORDER BY views DESC LIMIT 10 ON main_song.id=main_statsong.id').annotate(
+        views_count=db_models.F('views')).order_by('-views')[:10]
+        return general_query
 
     @cache.cache_page(timeout=60 * 5)
     def get(self, request):
@@ -148,7 +162,4 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
-
-
-
 
