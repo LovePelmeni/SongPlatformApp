@@ -4,9 +4,6 @@ class AwsFileNotFoundError(BaseException):
         self.message = message
         self.status_code = status_code
 
-    def __call__(self):
-        raise self
-
 class AwsInvalidFilelinkError(BaseException):
     pass
 

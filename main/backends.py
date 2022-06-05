@@ -24,6 +24,7 @@ class AdminAuthBackend(backends.RemoteUserBackend):
             return django.core.exceptions.PermissionDenied()
         return True
 
+
 class UserAuthBackend(backends.RemoteUserBackend):
 
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -40,5 +41,4 @@ class UserAuthBackend(backends.RemoteUserBackend):
         if user_obj.is_anonymous:
             return django.core.exceptions.PermissionDenied()
         return True
-
 

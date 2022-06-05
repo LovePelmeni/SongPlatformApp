@@ -1,5 +1,4 @@
-FROM ubuntu:18.04
-
+FROM python:3.18.13-buster
 WORKDIR /project/app/
 
 ENV PYTHONUNBUFFERED=1
@@ -11,3 +10,5 @@ RUN pip install -r requirements.txt
 
 COPY . .
 ENTRYPOINT ["sh", "./proj-entrypoint.sh"]
+
+

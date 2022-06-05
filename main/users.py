@@ -59,8 +59,8 @@ class CreateUserAPIView(views.APIView):
 
             user = models.CustomUser.objects.create_user(**serializer.validated_data)
 
-            if request.FILES.get('avatar_image'):
-                aws_s3.files_api._save_file_to_aws(request, user)
+            # if request.FILES.get('avatar_image'):
+            #     aws_s3.files_api._save_file_to_aws(request, user)
             try:
                 token = apply_jwt_token(user=user)
                 login(request, user, backend=getattr(settings, 'AUTHENTICATION_CLASSES')[0])
@@ -164,4 +164,6 @@ class LoginAPIView(views.APIView):
 
             return response
         return django.http.HttpResponse(status=400)
+
+
 

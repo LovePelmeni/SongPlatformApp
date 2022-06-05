@@ -197,6 +197,15 @@ else:
             'HOST': 'localhost',
             'PORT': 5434
         },
+
+        'rabbitmq_message_database': {
+            "ENGINE": 'django.db.backends.postgresql',
+            'NAME': 'rabbitmq_message_db',
+            'USER': 'postgres',
+            'PASSWORD': "Kirill",
+            "HOST": 'rabbitmq_message_db',
+            "PORT": '5430'
+        }
     }
 
     CORS_ALLOW_ALL_ORIGINS = True

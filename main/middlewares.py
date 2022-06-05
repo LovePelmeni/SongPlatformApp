@@ -7,6 +7,7 @@ import jwt, logging, requests
 
 logger = logging.getLogger(__name__)
 
+
 class CheckUserAuthMiddleware(deprecation.MiddlewareMixin):
 
     def process_request(self, request):
@@ -24,6 +25,10 @@ class CheckBlockedUserMiddleware(deprecation.MiddlewareMixin):
         except AttributeError:
             return None
 
+class StatisticMiddleware(deprecation.MiddlewareMixin):
 
+    async def update_statistic(self, views: int):
+        pass
 
-
+    def process_request(self, request):
+        pass
