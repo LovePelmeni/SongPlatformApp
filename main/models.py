@@ -186,13 +186,19 @@ class Subscription(models.Model):
         return self.subscription_name
 
     def distributed_create(self, new_credentials: dict):
-        pass
+        import requests
+        response = requests.post('http://transaction_app:8095:/create/customer/')
+        response.raise_for_status()
 
     def distributed_delete(self, fields=None):
-        pass
+        import requests
+        response = requests.delete('http://transaction_app:8095:/delete/customer/')
+        response.raise_for_status()
 
     def distributed_update(self, updated_data: dict):
-        pass
+        import requests
+        response = requests.put('http://transaction_app:8095:/edit/customer/')
+        response.raise_for_status()
 
     def has_permission(self, user):
         return user in self.owners.all()
