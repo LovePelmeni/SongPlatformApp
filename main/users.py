@@ -131,6 +131,7 @@ class EditUserAPIView(views.APIView):
 
 import django.template.response
 from django.conf import settings
+
 from django.utils import decorators
 from django.core.serializers.json import DjangoJSONEncoder
 
@@ -179,4 +180,5 @@ class LoginAPIView(views.APIView):
             login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
             return response
         return django.http.HttpResponse(status=400)
+
 

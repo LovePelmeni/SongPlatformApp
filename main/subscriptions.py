@@ -11,17 +11,13 @@ import django.db.models
 from django.db import transaction
 
 
-def cache_subscriptions(subscriptions):
-    from django.core.cache import cache
-    return cache.set('')
-
 class SubscriptionGenericView(generics.GenericAPIView):
 
     queryset = models.Subscription.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (auth.UserAuthenticationClass,)
     dropbox_storage = dropbox_storage.files_api.DropBoxBucket(
-    getattr(settings, 'DROPBOX_API_ENDPOINT'))
+    getattr(settings, 'DEFAULT_PREVIEW_PATH'))
 
     def handle_exception(self, exc):
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
@@ -60,9 +56,8 @@ class SubscriptionGenericView(generics.GenericAPIView):
             serializer = serializers.SubscriptionSerializer(request.data, many=False)
 
             if 'preview' in serializer.validated_data.keys():
-                file_link = dropbox_storage.files_api._save_to_aws(bucket_name=getattr(
-
-                settings, 'BUCKET_PREVIEW_NAME'), file=request.FILES.get('preview'))
+                file_link = self.dropbox_storage.upload(file=request.FILES.get('preview'),
+                filename=request.FILES.get('preview').name.split('.')[0])
                 serializer.validated_data.update({'preview': file_link})
 
             if serializer.is_valid(raise_exception=True):
@@ -85,12 +80,6 @@ class SubscriptionGenericView(generics.GenericAPIView):
         except(django.core.exceptions.ObjectDoesNotExist,) as exception:
             transaction.rollback()
             raise exception
-
-    @cache.cache_page(timeout=60 * 5)
-    def get(self, request):
-        form = forms.SubscriptionForm()
-        return django.http.HttpResponse(
-        json.dumps({'form': form}), status=200)
 
 
 class SubscriptionSongGenericView(generics.GenericAPIView):
@@ -142,5 +131,4 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
         except(django.db.IntegrityError, django.db.ProgrammingError,) as exception:
             transaction.rollback()
             raise exception
-
 

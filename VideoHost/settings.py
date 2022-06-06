@@ -44,11 +44,10 @@ INSTALLED_APPS = [
 
     'main',
     'rest_framework',
-
-    'storages',
     'corsheaders',
     'drf_yasg',
 ]
+
 
 AUTHENTICATION_BACKENDS = (
 
@@ -155,13 +154,18 @@ if not DEBUG:
         },
     }
 
+    SONG_APP_DOMAIN = os.environ.get('SONG_APP_DOMAIN')
+    FRONTEND_APPLICATION_DOMAIN = os.environ.get('VUE_APP_DOMAIN')
+    SUBSCRIPTION_APP_DOMAIN = os.environ.get('SUBSCRIPTION_APP_DOMAIN')
+
     CORS_ALLOWED_ORIGINS = [
 
-        'http://localhost:8000',
-        'http://localhost:8033',
-        'http://localhost:3000'
+        'http://%s:8000' % SONG_APP_DOMAIN,
+        'http://%s:3000' % FRONTEND_APPLICATION_DOMAIN,
+        'http://%s:8033' % SUBSCRIPTION_APP_DOMAIN
 
     ]
+
 
     CHANNEL_LAYER = {
         'default': {
@@ -181,9 +185,10 @@ if not DEBUG:
         }
     }
 
-    DROPBOX_SONG_AUDIO_FILE_BUCKET = os.environ.get('DROPBOX_SONG_AUDIO_FILE_BUCKET')
-    DROPBOX_SUBSCRIPTION_PREVIEW_FILE_BUCKET = os.environ.get('DROPBOX_SUBSCRIPTION_PREVIEW_FILE_BUCKET')
-    DROPBOX_CUSTOMER_AVATAR_FILE_BUCKET = os.environ.get('DROPBOX_CUSTOMER_AVATAR_FILE_BUCKET')
+    DROPBOX_SONG_PREVIEW_FILE_PATH = os.environ.get('DROPBOX_SONG_PREVIEW_FILE_PATH')
+    DROPBOX_SONG_AUDIO_FILE_PATH = os.environ.get('DROPBOX_SONG_AUDIO_FILE_PATH')
+    DROPBOX_SUBSCRIPTION_PREVIEW_FILE_PATH = os.environ.get('DROPBOX_SUBSCRIPTION_PREVIEW_FILE_PATH')
+    DROPBOX_CUSTOMER_AVATAR_FILE_PATH = os.environ.get('DROPBOX_CUSTOMER_AVATAR_FILE_PATH')
 
     RABBITMQ_HOST = os.getenv('RABBITMQ_HOST')
     RABBITMQ_USER = os.getenv('RABBITMQ_USER')

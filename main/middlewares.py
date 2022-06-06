@@ -7,15 +7,6 @@ import jwt, logging, requests
 
 logger = logging.getLogger(__name__)
 
-
-class CheckUserAuthMiddleware(deprecation.MiddlewareMixin):
-
-    def process_request(self, request):
-        if not request.get_signed_cookie('jwt-token'):
-            return django.http.HttpResponseRedirect(reverse('main:registry'))
-        return None
-
-
 class SetUpAuthorizationHeaderMiddleware(deprecation.MiddlewareMixin):
 
     def process_request(self, request):
@@ -24,7 +15,6 @@ class SetUpAuthorizationHeaderMiddleware(deprecation.MiddlewareMixin):
                 request.headers['Authorization'] = request.get_signed_cookie('jwt-token')
             return None
         except(KeyError,):
-            request.headers['UnAuthorized'] = True
             return None
 
 
@@ -33,8 +23,8 @@ class CheckBlockedUserMiddleware(deprecation.MiddlewareMixin):
     def process_request(self, request):
         try:
             if request.user.is_blocked:
-                return django.http.HttpResponseRedirect(reverse('main:blocked_page'))
-            return None
+                request.headers['IS_BLOCKED'] = True
+                return None
         except AttributeError:
             return None
 

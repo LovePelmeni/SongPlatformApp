@@ -77,6 +77,3 @@ openapi_urlpatterns_schema = [
 urlpatterns += openapi_urlpatterns_schema
 
 
-
-
-

@@ -2,11 +2,13 @@ import typing
 
 import django.utils.decorators
 from rest_framework import views, viewsets, permissions as rest_perms
+
 from . import permissions, serializers, models
 import json
-from django.views.decorators import cache, csrf
 
+from django.views.decorators import cache, csrf
 import django.http, django.core.serializers.json
+
 from django.views.decorators import vary
 from django.db import transaction
 
@@ -16,6 +18,7 @@ class AlbumViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.AlbumSerializer
     permission_classes = (permissions.IsAlbumOwner,)
     queryset = models.Album.objects.all()
+
 
     @django.utils.decorators.method_decorator(vary.vary_on_headers('Authorization'))
     def retrieve(self, request, *args, **kwargs):
@@ -70,5 +73,7 @@ class AlbumAPIView(views.APIView):
         except(django.core.exceptions.ObjectDoesNotExist,):
             transaction.rollback()
             raise django.core.exceptions.ObjectDoesNotExist()
+
+
 
 

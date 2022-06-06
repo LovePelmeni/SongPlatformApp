@@ -60,9 +60,13 @@ class DistributedController(object):
 
 
     def listen_for_transaction_response(self):
+        """
+        / * Starts asynchronous connection consumer and listen for response.
+        """
         with self.rabbitmq_connection() as connection:
             connection.basic_consume(queue=self.event_name, exclusive=False,
             on_message_callback=self.handle_transaction_response)
+            asgiref.sync.sync_to_async(connection.start_consuming)
 
 
     @staticmethod
@@ -78,6 +82,7 @@ class DistributedController(object):
             raise NotImplementedError
 
     def __call__(self, *args, **kwargs):
+        """On Call sends message asynchronously via RabbitMQ and start consumer"""
         import pika
         try:
             with rabbitmq_connection() as connection_channel:
@@ -88,14 +93,16 @@ class DistributedController(object):
             raise NotImplementedError
 
 
+
 distributed_controller = DistributedController
+
 
 
 class SongQueryset(django.db.models.QuerySet):
 
     def create(self, **kwargs):
         try:
-            song = self.model(**kwargs)
+            song = self.model(**kwargs).create()
             song.create_statistic_model()
             return song
         except(NotImplementedError):
@@ -115,8 +122,20 @@ class Song(models.Model):
 
     def delete(self, using=None, **kwargs):
         from . import dropbox
-        dropbox.files_api._delete_from_aws_storage(file_link=kwargs.get('file_link'))
-        return super().delete(using=using, **kwargs)
+        try:
+            bucket = dropbox.files_api.DropBoxBucket(path=getattr(settings, 'DROPBOX_SONG_AUDIO_FILE_PATH'))
+            bucket.remove(file_link=self.audio_file.value_to_string(self.audio_file))
+            bucket.remove(file_link=self.preview.value_to_string(self.preview))
+            return super().delete(using=using, **kwargs)
+
+        except(django.core.exceptions.ObjectDoesNotExist,):
+            raise NotImplementedError
+
+    def update(self, **new_kwargs):
+        pass
+
+    def upload_avatar(self, avatar):
+        pass
 
     def has_permission(self, user):
         import django.core.exceptions
@@ -171,9 +190,9 @@ class SubscriptionQueryset(models.QuerySet):
         pass
 
 
-
 class SubscriptionManager(db.models.manager.BaseManager.from_queryset(queryset_class=SubscriptionQueryset)):
     pass
+
 
 currency = [
     ('RUB', 'rub'),

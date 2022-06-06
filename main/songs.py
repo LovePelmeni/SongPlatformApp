@@ -11,6 +11,7 @@ from . import serializers
 import json, django.core.serializers.json
 
 
+
 class SongCatalogViewSet(viewsets.ModelViewSet):
 
     queryset = models.Song.objects.all()
@@ -30,6 +31,7 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
 
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
             return django.http.HttpResponseNotFound()
+
         raise exc
 
 
@@ -45,7 +47,6 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
             song = models.Song.objects.get(id=request.query_params.get('song_id')).select_related('statistic')
             song.statistic.views += 1
             song.save()
-
             self.check_object_permissions(request=request, song=song)
             return django.http.HttpResponse(status=200, content=json.dumps({'song': song}))
 
@@ -111,7 +112,7 @@ class SongOwnerGenericView(generics.GenericAPIView):
     queryset = models.Song.objects.all()
     permissions = (api_permissions.HasSongPermission,)
     song_bucket = dropbox_storage.files_api.DropBoxBucket(
-    bucket_name=getattr(settings, 'DROPBOX_API_ENDPOINT'))
+    path=getattr(settings, 'SONG_AUDIO_FILE_PATH'))
 
     def handle_exception(self, exc):
 
@@ -163,3 +164,6 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
+
+
+
