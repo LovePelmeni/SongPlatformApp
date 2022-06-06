@@ -95,19 +95,15 @@ TEMPLATES = [
 
 AUTH_USER_MODEL = 'main.CustomUser'
 WSGI_APPLICATION = 'VideoHost.wsgi.application'
-# ASGI_APPLICATION = 'main.routing.application'
 
 REST_FRAMEWORK = {
-
-    # 'DEFAULT_AUTHENTICATION_CLASSES': (
-    #     'main.authentication.UserAuthenticationClass',
-    # ),
 
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser'
     ),
+
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
@@ -119,6 +115,30 @@ REST_FRAMEWORK = {
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG'
+        },
+        'file_handler': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'file_log.log'
+        }
+    },
+    'loggers': {
+        'main': {
+            'handlers': ['console', 'file_handler'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
 if not DEBUG:
 
     import os
@@ -197,15 +217,6 @@ else:
             'HOST': 'localhost',
             'PORT': 5434
         },
-
-        'rabbitmq_message_database': {
-            "ENGINE": 'django.db.backends.postgresql',
-            'NAME': 'rabbitmq_message_db',
-            'USER': 'postgres',
-            'PASSWORD': "Kirill",
-            "HOST": 'rabbitmq_message_db',
-            "PORT": '5430'
-        }
     }
 
     CORS_ALLOW_ALL_ORIGINS = True
@@ -224,9 +235,9 @@ else:
         }
     }
 
-    AWS_SONG_BUCKET_NAME = ''
-    AWS_PREVIEWS_BUCKET_NAME = ''
-    AWS_AVATARS_BUCKET_NAME = ''
+    AWS_SONG_AUDIO_BUCKET_NAME = ''
+    AWS_SUBSCRIPTION_PREVIEWS_BUCKET_NAME = ''
+    AWS_USER_AVATARS_BUCKET_NAME = ''
     AWS_ACCESS_KEY_ID = ''
 
     AWS_SECRET_ACCESS_KEY = ''
@@ -245,7 +256,6 @@ else:
 
     AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
     PRIVATE_FILE_STORAGE = 'main.aws_s3.storage_backends.PrivateMediaStorage'
-
 
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

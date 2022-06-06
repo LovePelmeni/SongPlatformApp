@@ -72,3 +72,18 @@ class SongCreateSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AlbumSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Song
+        fields = '__all__'
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Subscription
+        fields = '__all__'
+
+
+

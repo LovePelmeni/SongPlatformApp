@@ -55,3 +55,5 @@ class IsAlbumOwner(permissions.BasePermission):
             id=request.query_params.get('album_id')).owner
         except(django.core.exceptions.ObjectDoesNotExist,):
             raise django.core.exceptions.PermissionDenied()
+
+

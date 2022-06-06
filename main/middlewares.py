@@ -15,6 +15,18 @@ class CheckUserAuthMiddleware(deprecation.MiddlewareMixin):
             return django.http.HttpResponseRedirect(reverse('main:registry'))
         return None
 
+class SetUpAuthorizationHeaderMiddleware(deprecation.MiddlewareMixin):
+
+    def process_request(self, request):
+        try:
+            if not request.headers.get('Authorization'):
+                request.headers['Authorization'] = request.get_signed_cookie('jwt-token')
+            return None
+        except(KeyError,):
+            request.headers['UnAuthorized'] = True
+            return None
+
+
 class CheckBlockedUserMiddleware(deprecation.MiddlewareMixin):
 
     def process_request(self, request):
@@ -25,10 +37,5 @@ class CheckBlockedUserMiddleware(deprecation.MiddlewareMixin):
         except AttributeError:
             return None
 
-class StatisticMiddleware(deprecation.MiddlewareMixin):
 
-    async def update_statistic(self, views: int):
-        pass
 
-    def process_request(self, request):
-        pass

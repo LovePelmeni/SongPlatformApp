@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import typing
+
+import pika
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 
@@ -12,6 +15,53 @@ from django import db
 from django.core import validators, exceptions
 from django.db import transaction
 
+EVENTS = ["customer_create", "customer_delete", "customer_update", "sub_create", "sub_delete", "sub_update"]
+import json
+
+class DistributedController(object):
+    """
+    / * Class Represents the distributed transaction controller
+        that allows making changes across all services in the whole project.
+        Basically is used for create/edit/delete/ customers and subscriptions data
+        in order to make the other services up-to-date of the information about events, happen on the main line
+
+        It Uses RabbitMQ as a message (event) delivery, that allows to make quick changes.
+    """
+    def __init__(self, event_name:
+    typing.Literal["customer_create", "customer_delete",
+    "customer_update", "sub_create", "sub_delete", "sub_update"],
+    request_body: dict | str,
+    client_credentials=None
+    ):
+        self.event_name = event_name
+        self.client_connection_credentials = client_credentials if client_credentials else None
+        self.request_body = json.dumps(request_body) if not isinstance(request_body, str) else request_body
+        self.exchange = 'exchange'
+
+    @staticmethod
+    def rabbitmq_connection() -> typing.Generator[pika.BlockingConnection.channel]:
+        import pika.exceptions
+        try:
+            yield pika.BlockingConnection(parameters=pika.ConnectionParameters(
+            credentials=(settings.RABBITMQ_USER, settings.RABBITMQ_PASSWORD),
+            host=settings.RABBITMQ_HOST, port=settings.RABBITMQ_PORT, virtual_host=settings.RABBITMQ_VHOST)).channel()
+
+        except(pika.exceptions.ChannelError, pika.exceptions.AMQPError, pika.exceptions.ConnectionClosed) as exception:
+            logger.error('[EXCEPTION OCCURRED WHILE CONNECTING RABBITMQ CLIENT TO THE SERVER]: %s' % exception)
+            raise NotImplementedError
+
+    def __call__(self, *args, **kwargs):
+        import pika
+        try:
+            with rabbitmq_connection() as connection_channel:
+                connection_channel.basic_publish(routing_key=self.event_name,
+                body=self.request_body, exchange=self.exchange)
+            return True
+        except(NotImplementedError,):
+            raise
+
+
+distributed_controller = DistributedController
 
 class PhoneNumberField(models.CharField):
 
@@ -37,7 +87,6 @@ class CustomManager(BaseUserManager):
     def create_user(self, **kwargs):
         try:
             user = self.model(**kwargs)
-            transaction_checker(**kwargs).execute_create()
             user.set_password(raw_password=kwargs.get('password'))
             user.save(using=self._db)
             return user
@@ -94,18 +143,37 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def delete(self, using=None, **kwargs):
         try:
-           pass
-
+           self.distributed_delete()
+           return super().delete(using=using, **kwargs)
         except() as exception:
             raise exception
 
-    def distributed_create(self):
+
+    def create(self, **kwargs):
+        return self.distributed_create(**kwargs)
+
+
+    def update(self, **kwargs):
+        return self.distributed_update(**{'customer_name': self.username,
+        'customer_id': self.id, 'updated_data': kwargs})
+
+
+    def distributed_create(self, **kwargs) -> DistributedController:
+        # result = distributed_controller(event_name='customer_create',
+        # client_credentials=None, request_body=kwargs)
+        # return result
         pass
 
-    def distributed_update(self):
+    def distributed_update(self, **kwargs) -> DistributedController:
+        # result = distributed_controller(event_name='customer_update',
+        # client_credentials=None, request_body=kwargs)
+        # return result
         pass
 
-    def distributed_delete(self):
+    def distributed_delete(self, **kwargs) -> DistributedController:
+        # result = distributed_controller(event_name='customer_delete',
+        # client_credentials=None, request_body=kwargs)
+        # return result
         pass
 
 
@@ -186,6 +254,7 @@ class Subscription(models.Model):
         return self.subscription_name
 
     def distributed_create(self, new_credentials: dict):
+
         import requests
         response = requests.post('http://transaction_app:8095:/create/customer/')
         response.raise_for_status()
@@ -199,6 +268,7 @@ class Subscription(models.Model):
         import requests
         response = requests.put('http://transaction_app:8095:/edit/customer/')
         response.raise_for_status()
+        pass
 
     def has_permission(self, user):
         return user in self.owners.all()
@@ -211,8 +281,6 @@ class Subscription(models.Model):
             else:
                 restricted_list.append(elem)
         return restricted_list
-
-
 
 class Album(models.Model):
 
@@ -233,6 +301,7 @@ class StatSong(models.Model):
 
     def __str__(self):
         return self.song.id
+
 
 
 

@@ -1,9 +1,13 @@
 import django.utils.decorators
 from rest_framework import views, viewsets, permissions as rest_perms
-from . import permissions
+from . import permissions, serializers, models
 import json
+from django.views.decorators import cache, csrf
+
 import django.http, django.core.serializers.json
 from django.views.decorators import vary
+from django.db import transaction
+
 
 
 class AlbumViewSet(viewsets.ModelViewSet):
@@ -12,12 +16,14 @@ class AlbumViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAlbumOwner, rest_perms.IsAuthenticated)
     queryset = models.Album.objects.all()
 
+
     @django.utils.decorators.method_decorator(vary.vary_on_headers('Authorization'))
     def retrieve(self, request, *args, **kwargs):
         queryset = self.get_queryset().filter(owner=request.user,
         id=request.query_params.get('album_id')).select_related('songs')
         return django.http.HttpResponse(json.dumps({'queryset': queryset},
-        cls=django.core.serializers.json.DjangoJSONEncoder))
+        cls=django.core.serializers.json.DjangoJSONEncoder), status=status.HTTP_200_OK)
+
 
     @django.utils.decorators.method_decorator(vary.vary_on_headers('Authorization'))
     def list(self, request, **kwargs):
@@ -32,30 +38,32 @@ class AlbumAPIView(views.APIView):
     permission_classes = (permissions.IsAlbumOwner,
     rest_perms.IsAuthenticated,)
 
-
     def handle_exception(self, exc):
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
             return django.http.HttpResponseNotFound()
         return django.http.HttpResponseServerError()
-
 
     @cache.cache_page(timeout=60 * 5)
     def get(self, request):
         return django.http.JsonResponse(
         {'form': forms.AlbumForm()})
 
-
+    @transaction.atomic
     @csrf.requires_csrf_token
     def post(self, request):
-        album = self.serializer_class(request.data, many=False)
-        if album.is_valid(raise_exception=True):
-            if 'queryset' in album.validated_data.items():
-                album.songs.update(**album.validated_data.get('queryset'))
+        try:
+            album = self.serializer_class(request.data, many=False)
+            if album.is_valid(raise_exception=True):
+                if 'queryset' in album.validated_data.items():
+                    album.songs.update(**album.validated_data.get('queryset'))
 
-        logger.debug('data has been obtained..')
-        return django.http.HttpResponse(status=200)
+            logger.debug('data has been obtained..')
+            return django.http.HttpResponse(status=200)
+        except() as exception:
+            transaction.rollback()
+            raise exception
 
-
+    @transaction.atomic
     @csrf.requires_csrf_token
     def put(self, request):
         try:
@@ -63,7 +71,10 @@ class AlbumAPIView(views.APIView):
             updated_data = self.serializer_class(request.data, many=False).validated_data
             album.update(**updated_data)
             return django.http.HttpResponse(status=200)
+
         except(django.core.exceptions.ObjectDoesNotExist,):
+            transaction.rollback()
             raise django.core.exceptions.ObjectDoesNotExist()
+
 
 

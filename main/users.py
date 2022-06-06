@@ -1,12 +1,14 @@
 import django.http, django.core.exceptions
 from rest_framework import views, status, permissions, decorators
 from django.db import transaction
+import datetime, json
 
 from django import db
 from django import urls
 
 from . import permissions as api_perms, models, forms, aws_s3, authentication, serializers as api_serializers
 from .aws_s3 import exceptions
+
 import jwt, logging
 from django.views.decorators import csrf, cache
 
@@ -24,32 +26,40 @@ def apply_jwt_token(user):
         raise jwt.PyJWTError()
 
 
+from django.contrib.auth.views import auth_logout
+
+
+@transaction.atomic
 @decorators.api_view(['DELETE'])
 def delete_user(request):
     try:
-        request.user.delete()
+        import jwt
+        user_id = jwt.decode(request.get_signed_cookie('jwt-token'),
+        key=getattr(settings, 'SECRET_KEY'), algorithms='HS256').get('user_id')
+        assert user_id
+
+        response = django.http.HttpResponse(status=200)
+        response.delete_cookie('jwt-token')
+
+        auth_logout(request=request)
+        models.CustomUser.objects.get(id=user_id).delete()
         return django.http.HttpResponse(status=status.HTTP_200_OK)
 
-    except(db.IntegrityError,):
+    except(db.IntegrityError, django.core.exceptions.ObjectDoesNotExist):
         return django.http.HttpResponseServerError()
 
-    except(exceptions.XMPPUserDeleteFailed,):
+    except(NotImplementedError, AttributeError):
         logger.debug('[USER-API-EXCEPTION]. Could not delete user profile. time - [%s]' % datetime.datetime.now())
         return django.http.HttpResponseServerError(content=json.dumps({'error': 'Delete Profile Failure'}))
 
+    except():
+        transaction.rollback()
 
 class CreateUserAPIView(views.APIView):
 
 
     permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
     serializer_class = api_serializers.UserSerializer
-
-
-    @cache.cache_page(60 * 5)
-    def get(self, request):
-        return django.http.JsonResponse(request,
-        template='main/register.html', context={'form': forms.CreateUserForm()}).render()
-
 
     @transaction.atomic
     def post(self, request):
@@ -63,7 +73,7 @@ class CreateUserAPIView(views.APIView):
             #     aws_s3.files_api._save_file_to_aws(request, user)
             try:
                 token = apply_jwt_token(user=user)
-                login(request, user, backend=getattr(settings, 'AUTHENTICATION_CLASSES')[0])
+                login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
                 response = django.http.HttpResponse(status=200)
                 response.set_signed_cookie('jwt-token', token)
                 return response
@@ -83,12 +93,13 @@ class EditUserAPIView(views.APIView):
 
     def handle_exception(self, exc):
         if isinstance(exc, django.db.IntegrityError) or isinstance(exc, django.db.ProgrammingError):
-            return django.http.HttpResponseServerError()
+            pass
+        return django.http.HttpResponseServerError()
 
 
-    @cache.cache_page(60 * 5)
+    @cache.cache_page(timeout=60 * 5)
     def get(self, request):
-        return django.template.response.TemplateResponse(request, 'main/edit_profile.html',
+        return django.http.HttpResponse(request, 'main/edit_profile.html',
         context={'form': forms.EditUserForm(initial={elem: value for elem, value in request.user.__dict__.items()})})
 
     @csrf.requires_csrf_token
@@ -97,6 +108,7 @@ class EditUserAPIView(views.APIView):
         try:
             form = forms.EditUserForm(request.data)
             if form.has_changed():
+
                 if 'avatar_image' in form.changed_data:
                     request.user.apply_new_avatar(avatar=form.cleaned_data['avatar'])
 
@@ -108,6 +120,7 @@ class EditUserAPIView(views.APIView):
 
                 request.user.save()
             return django.http.HttpResponse(status=200)
+
         except(django.db.IntegrityError, django.db.ProgrammingError,) as exception :
             transaction.rollback()
             raise exception
@@ -116,11 +129,15 @@ class EditUserAPIView(views.APIView):
 import django.template.response
 from django.conf import settings
 from django.utils import decorators
+from django.core.serializers.json import DjangoJSONEncoder
+
 
 class CustomerProfileAPIView(views.APIView):
 
-    permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (authentication.UserAuthenticationClass,)
+    # authentication_classes = (authentication.UserAuthenticationClass,)
+
+    def check_permissions(self, request):
+        return self.get_authenticators()[0].authenticate(request)
 
     @decorators.method_decorator(cache.never_cache)
     def get(self, request):
@@ -128,13 +145,13 @@ class CustomerProfileAPIView(views.APIView):
             user_id = jwt.decode(request.get_signed_cookie('jwt-token'),
             key=getattr(settings, 'SECRET_KEY'), algorithms='HS256').get('user_id')
 
-            user = models.CustomUser.objects.filter(id=user_id).first()
-            return django.http.JsonResponse(request, template='main/profile.html',
-            context={'user': user})
+            user = list(models.CustomUser.objects.filter(id=user_id).values())
+            return django.http.HttpResponse(content=json.dumps({'user': user},
+            cls=DjangoJSONEncoder), status=status.HTTP_200_OK)
 
         except(KeyError, ):
             return django.http.HttpResponse(
-            status=status.HTTP_501_NOT_IMPLEMENTED)
+            status=status.HTTP_404_NOT_FOUND)
 
 
 from django.contrib.auth import\
@@ -148,22 +165,15 @@ class LoginAPIView(views.APIView):
             return django.core.exceptions.PermissionDenied()
         return True
 
-    @cache.cache_page(timeout=60 * 5)
-    def get(self, request):
-        return django.http.JsonResponse(
-        request, 'main/index.html', {'form': forms.LoginForm()})
-
     @csrf.csrf_exempt
     def post(self, request):
+
         response = django.http.HttpResponse(status=200)
         user = authenticate(username=request.data.get('username'),
         password=request.data.get('password'))
         if user is not None:
-            request.set_signed_cookie(apply_jwt_token(user))
-            login(request, user, backend=getattr(settings, 'AUTHENTICATION_CLASSES')[0])
-
+            response.set_signed_cookie('jwt-token', apply_jwt_token(user))
+            login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
             return response
         return django.http.HttpResponse(status=400)
-
-
 

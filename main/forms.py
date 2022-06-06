@@ -54,3 +54,11 @@ class SubscriptionForm(forms.ModelForm):
     class Meta:
         model = models.Subscription
         fields = '__all__'
+
+
+
+class LoginForm(forms.ModelForm):
+
+    class Meta:
+        model = models.CustomUser
+        fields = ('username', 'password')

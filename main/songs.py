@@ -8,7 +8,7 @@ from django.views.decorators import http, cache, csrf
 from django.db import transaction
 
 
-class SongCatalogViewSet(viewsets.ReadOnlyModelViewSet):
+class SongCatalogViewSet(viewsets.ModelViewSet):
 
     queryset = models.Song.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
@@ -29,14 +29,16 @@ class SongCatalogViewSet(viewsets.ReadOnlyModelViewSet):
         or not song.subscrition in request.user.subscriptions.all():
             raise django.core.exceptions.PermissionDenied()
 
-    def get_queryset(self):
-        return self.filter_queryset(queryset=self.queryset)
-
+    def default_response_headers(self):
+        return HTTP_HEADERS()
 
     @decorators.action(methods=['get'], detail=True, description='Obtain Single Song Object.')
     def retrieve(self, request, *args, **kwargs):
         try:
-            song = models.Song.objects.get(id=request.query_params.get('song_id'))
+            song = models.Song.objects.get(id=request.query_params.get('song_id')).select_related('statistic')
+            song.statistic.views += 1
+            song.save()
+
             self.check_object_permissions(request=request, song=song)
             return super().retrieve(request, *args, **kwargs)
 
@@ -58,17 +60,16 @@ class SongCatalogViewSet(viewsets.ReadOnlyModelViewSet):
         output_field=django.db.models.BooleanField()))
         return super().list(request, *args, **kwargs)
 
-    def filter_queryset(self, queryset):
-        return queryset.filter(len(F('subscriptions')) < 1)
-
 
 import typing
+from django.db import models as db_models
+
 class TopWeekSongsAPIView(generics.GenericAPIView):
 
     permission_classes = (permissions.AllowAny,)
     queryset = models.Song.objects.all()
 
-    def get_most_viewed_queryset(self) -> typing.List[dict]:
+    def get_most_viewed_queryset(self) -> db_models.QuerySet:
         """
         / * returns most listened songs during this week.
         // * joins with Song queryset by song ID.
@@ -78,8 +79,9 @@ class TopWeekSongsAPIView(generics.GenericAPIView):
         general_query = self.get_queryset().raw('SELECT * FROM main_song JOIN'
         # / * join implementation between Song and their statistic
         'SELECT * FROM main_statsong ORDER BY views DESC LIMIT 10 ON main_song.id=main_statsong.id').annotate(
-        views_count=db_models.F('views')).order_by('-views')[:10]
-        return general_query
+        views_count=db_models.F('views')).order_by('-views_count')[:10]
+        return db_models.QuerySet(general_query)
+
 
     @cache.cache_page(timeout=60 * 5)
     def get(self, request):
@@ -162,4 +164,12 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
+
+
+
+@decorators.api_view(['GET'])
+def some_method(request):
+    logger.debug('data has been obtained...')
+    return django.http.HttpResponse(status=200)
+
 

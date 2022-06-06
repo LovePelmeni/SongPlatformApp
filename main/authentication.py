@@ -37,4 +37,3 @@ class UserAuthenticationClass(authentication.BaseAuthentication):
 
         except jwt.PyJWTError:
             raise rest_framework.exceptions.AuthenticationFailed()
-
