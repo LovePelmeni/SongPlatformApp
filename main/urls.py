@@ -1,4 +1,3 @@
-from . import views
 from django.urls import path
 from . import users
 from rest_framework import permissions
@@ -42,12 +41,6 @@ customer_patterns = [
     path('get/user/profile/', users.CustomerProfileAPIView.as_view(), name='get_user_profile'),
 ]
 
-block_patterns = [
-
-    #block page:
-    path('get/blocked/page/', views.get_blocked_page, name='blocked_page'),
-]
-
 healthcheck_patterns = [
     path('healthcheck/', (lambda request: django.http.HttpResponse(status=200)), name='healthcheck'),
 ]
@@ -55,7 +48,6 @@ healthcheck_patterns = [
 
 urlpatterns += customer_patterns
 urlpatterns += songs_urlpatterns
-urlpatterns += block_patterns
 urlpatterns += subscription_urlpatterns
 urlpatterns += album_urlpatterns
 urlpatterns += healthcheck_patterns

@@ -16,8 +16,14 @@ from django.core import validators, exceptions
 from django.db import transaction
 
 EVENTS = ["customer_create", "customer_delete", "customer_update", "sub_create", "sub_delete", "sub_update"]
-import json
+SIGNALS = {}
 
+# for event in EVENTS: # registering success event signals...
+#     SIGNALS[event] = django.dispatch.dispatcher.Signal()
+
+
+
+import json
 class DistributedController(object):
     """
     / * Class Represents the distributed transaction controller
@@ -37,6 +43,27 @@ class DistributedController(object):
         self.client_connection_credentials = client_credentials if client_credentials else None
         self.request_body = json.dumps(request_body) if not isinstance(request_body, str) else request_body
         self.exchange = 'exchange'
+        self.queues = ["customer_create", "customer_delete", "customer_update",
+        "sub_create", "sub_delete", "sub_update"]
+
+
+    @staticmethod
+    def handle_transaction_response(queue, method, properties, body):
+        try:
+            signal_name = str(queue.method.queue)
+            if json.loads(body).decode('utf-8').get('status_code') in ('200', '201'):
+                signals[signal_name].send(transaction_data=body)
+                logger.debug('new transaction for %s has been passed successfully.' % queue.method.queue)
+
+        except(pika.exceptions.ConnectionClosed, pika.exceptions.ConnectionError,) as exception:
+            logger.error('RABBITMQ CONNECTION LOST, SEEMS LIKE AN ERROR: %s' % exception)
+
+
+    def listen_for_transaction_response(self):
+        with self.rabbitmq_connection() as connection:
+            connection.basic_consume(queue=self.event_name, exclusive=False,
+            on_message_callback=self.handle_transaction_response)
+
 
     @staticmethod
     def rabbitmq_connection() -> typing.Generator[pika.BlockingConnection.channel]:
@@ -58,7 +85,7 @@ class DistributedController(object):
                 body=self.request_body, exchange=self.exchange)
             return True
         except(NotImplementedError,):
-            raise
+            raise NotImplementedError
 
 
 distributed_controller = DistributedController
@@ -263,10 +290,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         from . import dropbox
         bucket_name = settings.AWS_IMAGE_BUCKET_NAME
         dropbox.files_api._delete_from_aws_storage(bucket_name=bucket_name,
-                                                   file_link=self.avatar_image)
-
-        avatar_url = dropbox.files_api._save_file_to_aws(bucket_name=bucket_name,
-                                                         file=avatar)
+        file_link=self.avatar_image)
         self.avatar_image = avatar_url
         self.save(using=self._db)
 

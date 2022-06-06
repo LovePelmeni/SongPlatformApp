@@ -191,7 +191,7 @@ if not DEBUG:
     RABBITMQ_PORT = os.getenv('RABBITMQ_PORT')
     RABBITMQ_VHOST = os.getenv('RABBITMQ_VHOST')
 
-
+    DROPBOX_ACCESS_KEY = os.environ.get('DROPBOX_ACCESS_KEY')
 
 else:
 
@@ -223,15 +223,17 @@ else:
             'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
-    DROPBOX_SONG_AUDIO_FILE_BUCKET = ''
-    DROPBOX_SUBSCRIPTION_PREVIEW_FILE_BUCKET = ''
-    DROPBOX_CUSTOMER_AVATAR_FILE_BUCKET = ''
 
-    RABBITMQ_HOST = ''
-    RABBITMQ_USER = ''
-    RABBITMQ_PASSWORD = ''
-    RABBITMQ_PORT = ''
-    RABBITMQ_VHOST = ''
+    DROPBOX_API_ENDPOINT = 'http://dropbox_api/files/api/'
+
+    RABBITMQ_HOST = 'localhost'
+    RABBITMQ_USER = 'rabbitmq_user'
+    RABBITMQ_PASSWORD = 'rabbitmq_password'
+    RABBITMQ_PORT = '5671'
+    RABBITMQ_VHOST = 'rabbitmq_vhost'
+
+    DROPBOX_ACCESS_KEY = 'bep2nuhf1wmtq3y'
+    DROPBOX_ACCESS_SECRET = 't2nfz143f8iqdc9'
 
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

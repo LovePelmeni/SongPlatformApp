@@ -7,6 +7,6 @@ class MainConfig(AppConfig):
     name = 'main'
 
     def ready(self):
-        pass
+        from . import signals
 
 

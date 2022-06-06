@@ -110,7 +110,8 @@ class SongOwnerGenericView(generics.GenericAPIView):
 
     queryset = models.Song.objects.all()
     permissions = (api_permissions.HasSongPermission,)
-    song_bucket = dropbox_storage.files_api.DropboxBucket(bucket_name=getattr(settings, 'DROPBOX_SONG_AUDIO_FILE'))
+    song_bucket = dropbox_storage.files_api.DropBoxBucket(
+    bucket_name=getattr(settings, 'DROPBOX_API_ENDPOINT'))
 
     def handle_exception(self, exc):
 
@@ -162,6 +163,3 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
-
-
-

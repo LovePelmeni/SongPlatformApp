@@ -1,5 +1,6 @@
 import django.utils.decorators
 from rest_framework import generics, status, authentication, permissions, viewsets
+from django.conf import settings
 
 from django.views.decorators import csrf, cache
 import django.http
@@ -19,8 +20,8 @@ class SubscriptionGenericView(generics.GenericAPIView):
     queryset = models.Subscription.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (auth.UserAuthenticationClass,)
-    dropbox_storage = dropbox_storage.files_api.DropboxBucket(
-    getattr(settings, 'DROPBOX_SUBSCRIPTION_PREVIEW_BUCKET_NAME'))
+    dropbox_storage = dropbox_storage.files_api.DropBoxBucket(
+    getattr(settings, 'DROPBOX_API_ENDPOINT'))
 
     def handle_exception(self, exc):
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
@@ -141,7 +142,5 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
         except(django.db.IntegrityError, django.db.ProgrammingError,) as exception:
             transaction.rollback()
             raise exception
-
-
 
 

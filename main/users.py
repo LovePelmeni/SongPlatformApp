@@ -3,11 +3,14 @@ from rest_framework import views, status, permissions, decorators
 from django.db import transaction
 import datetime, json
 
+from django.conf import settings
 from django import db
 from django import urls
 
 from . import permissions as api_perms, models, dropbox as dropbox_storage,\
 authentication, serializers as api_serializers
+
+from .dropbox import files_api
 
 import jwt, logging
 from django.views.decorators import csrf, cache
@@ -60,8 +63,8 @@ class CreateUserAPIView(views.APIView):
 
     # permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
     serializer_class = api_serializers.UserSerializer
-    dropbox_storage = dropbox_storage.files_api.DropboxBucket(
-    getattr(settings, 'DROPBOX_CUSTOMER_AVATAR_BUCKET_NAME'))
+    dropbox_storage = files_api.DropBoxBucket(
+    getattr(settings, 'DROPBOX_API_ENDPOINT'))
 
     @transaction.atomic
     def post(self, request):

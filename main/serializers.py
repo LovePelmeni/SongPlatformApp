@@ -74,6 +74,9 @@ class SongCreateSerializer(serializers.ModelSerializer):
 
 class AlbumSerializer(serializers.ModelSerializer):
 
+    album_name = serializers.CharField(label='Album Name', required=True, max_length=100)
+    description = serializers.CharField(label='Description', required=False, max_length=100)
+
     class Meta:
         model = models.Song
         fields = '__all__'
@@ -87,7 +90,14 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 class CatalogSongSerializer(serializers.Serializer):
 
-    pass
+    song_name = serializers.CharField(label='Song Name', required=False, max_length=100)
+    song_description = serializers.CharField(label='Song Description', required=False, max_length=200)
+    has_subscription = serializers.CharField(label='Has Subscription', required=False, default=False)
+
+    class Meta:
+        model = models.Song
+        fields = ('song_name', 'song_description', 'has_subscription')
+
 
 class SongUpdateSerializer(serializers.ModelSerializer):
 
