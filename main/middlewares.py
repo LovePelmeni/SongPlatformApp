@@ -15,6 +15,7 @@ class CheckUserAuthMiddleware(deprecation.MiddlewareMixin):
             return django.http.HttpResponseRedirect(reverse('main:registry'))
         return None
 
+
 class SetUpAuthorizationHeaderMiddleware(deprecation.MiddlewareMixin):
 
     def process_request(self, request):
@@ -36,6 +37,8 @@ class CheckBlockedUserMiddleware(deprecation.MiddlewareMixin):
             return None
         except AttributeError:
             return None
+
+
 
 
 

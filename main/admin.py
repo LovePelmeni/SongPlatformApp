@@ -16,9 +16,7 @@ class SongModelAdmin(admin.ModelAdmin):
 
 @admin.register(models.Subscription)
 class SubscriptionModelAdmin(admin.ModelAdmin):
-
-    list_display = '__all__'
-    fields = '__all__'
+    pass
 
 
 

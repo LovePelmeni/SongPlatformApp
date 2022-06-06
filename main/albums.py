@@ -1,3 +1,5 @@
+import typing
+
 import django.utils.decorators
 from rest_framework import views, viewsets, permissions as rest_perms
 from . import permissions, serializers, models
@@ -9,18 +11,17 @@ from django.views.decorators import vary
 from django.db import transaction
 
 
-
 class AlbumViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.AlbumSerializer
-    permission_classes = (permissions.IsAlbumOwner, rest_perms.IsAuthenticated)
+    permission_classes = (permissions.IsAlbumOwner,)
     queryset = models.Album.objects.all()
-
 
     @django.utils.decorators.method_decorator(vary.vary_on_headers('Authorization'))
     def retrieve(self, request, *args, **kwargs):
-        queryset = self.get_queryset().filter(owner=request.user,
-        id=request.query_params.get('album_id')).select_related('songs')
+        queryset = list(self.get_queryset().filter(owner=request.user,
+        id=request.query_params.get('album_id')).select_related('songs').values())
+
         return django.http.HttpResponse(json.dumps({'queryset': queryset},
         cls=django.core.serializers.json.DjangoJSONEncoder), status=status.HTTP_200_OK)
 
@@ -35,18 +36,12 @@ class AlbumViewSet(viewsets.ModelViewSet):
 class AlbumAPIView(views.APIView):
 
     serializer_class = serializers.AlbumSerializer
-    permission_classes = (permissions.IsAlbumOwner,
-    rest_perms.IsAuthenticated,)
+    permission_classes = (permissions.IsAlbumOwner,)
 
     def handle_exception(self, exc):
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
             return django.http.HttpResponseNotFound()
         return django.http.HttpResponseServerError()
-
-    @cache.cache_page(timeout=60 * 5)
-    def get(self, request):
-        return django.http.JsonResponse(
-        {'form': forms.AlbumForm()})
 
     @transaction.atomic
     @csrf.requires_csrf_token
@@ -75,6 +70,4 @@ class AlbumAPIView(views.APIView):
         except(django.core.exceptions.ObjectDoesNotExist,):
             transaction.rollback()
             raise django.core.exceptions.ObjectDoesNotExist()
-
-
 

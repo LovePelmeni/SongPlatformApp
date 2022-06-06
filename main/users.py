@@ -6,7 +6,7 @@ import datetime, json
 from django import db
 from django import urls
 
-from . import permissions as api_perms, models, forms, aws_s3, authentication, serializers as api_serializers
+from . import permissions as api_perms, models, aws_s3, authentication, serializers as api_serializers
 from .aws_s3 import exceptions
 
 import jwt, logging
@@ -58,7 +58,7 @@ def delete_user(request):
 class CreateUserAPIView(views.APIView):
 
 
-    permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
+    # permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
     serializer_class = api_serializers.UserSerializer
 
     @transaction.atomic
@@ -96,21 +96,15 @@ class EditUserAPIView(views.APIView):
             pass
         return django.http.HttpResponseServerError()
 
-
-    @cache.cache_page(timeout=60 * 5)
-    def get(self, request):
-        return django.http.HttpResponse(request, 'main/edit_profile.html',
-        context={'form': forms.EditUserForm(initial={elem: value for elem, value in request.user.__dict__.items()})})
-
     @csrf.requires_csrf_token
     @transaction.atomic
     def put(self, request):
         try:
-            form = forms.EditUserForm(request.data)
-            if form.has_changed():
+            serializer = api_serializers.UserSerializer(request.data, many=False)
+            if serializer.is_valid(raise_exception=True):
 
-                if 'avatar_image' in form.changed_data:
-                    request.user.apply_new_avatar(avatar=form.cleaned_data['avatar'])
+                if serializer.validated_data.get('avatar'):
+                    request.user.apply_new_avatar(avatar=serializer.validated_data['avatar'])
 
                 if 'password' in form.changed_data:
                     request.user.set_password(form.cleaned_data['password'])
@@ -176,4 +170,5 @@ class LoginAPIView(views.APIView):
             login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
             return response
         return django.http.HttpResponse(status=400)
+
 

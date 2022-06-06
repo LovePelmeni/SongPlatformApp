@@ -9,6 +9,5 @@ queue = channel.queue_declare(queue='some-queue', exclusive=False)
 def callback_method(request, method, queue, data):
     print(request, method, queue, data)
 
-print('queue declared...')
 channel.basic_consume(queue=queue.method.queue, on_message_callback=callback_method)
 channel.start_consuming()

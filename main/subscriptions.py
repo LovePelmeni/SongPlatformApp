@@ -3,9 +3,9 @@ from rest_framework import generics, status, authentication, permissions, viewse
 
 from django.views.decorators import csrf, cache
 import django.http
-from . import authentication as api_auth
+from . import authentication as api_auth, serializers
 
-from . import models, forms, authentication as auth
+from . import models, authentication as auth
 import django.db.models
 from django.db import transaction
 
@@ -119,14 +119,6 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
         except(django.db.IntegrityError, django.db.ProgrammingError, django.db.OperationalError,) as exception:
             transaction.rollback()
             raise exception
-
-    @django.utils.decorators.method_decorator(cache.never_cache)
-    def get(self, request):
-        from . import forms
-        queryset = [query for query in self.get_queryset() if request.user in query.owners.all()]
-        permission_form = forms.SetSubscriptionForm()
-        permission_form.songs.update({'queryset': queryset})
-        return django.http.HttpResponse({'form': permission_form}, status=status.HTTP_200_OK)
 
     @transaction.atomic
     @csrf.requires_csrf_token

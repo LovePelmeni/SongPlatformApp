@@ -14,8 +14,8 @@ songs_urlpatterns = [
     path('top/week/songs/', songs.TopWeekSongsAPIView.as_view(), name='top-week-songs'),
     path('song/', songs.SongOwnerGenericView.as_view(), name='song'),
 
-    path('free/catalog/all/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
-    path('get/free/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
+    path('get/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
+    path('get/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
 
 ]
 subscription_urlpatterns = [

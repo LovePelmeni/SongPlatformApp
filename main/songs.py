@@ -3,25 +3,34 @@ from rest_framework import generics, viewsets, mixins, decorators, status, permi
 
 from . import models, authentication, permissions as api_permissions
 import django.http
+from django.conf import settings
 
 from django.views.decorators import http, cache, csrf
 from django.db import transaction
+from . import serializers
+import json, django.core.serializers.json
 
 
 class SongCatalogViewSet(viewsets.ModelViewSet):
 
     queryset = models.Song.objects.all()
-    permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (authentication.UserAuthenticationClass,)
+    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    # authentication_classes = (authentication.UserAuthenticationClass,)
+
+    def get_request_user(self, request):
+        import jwt
+        user_id = jwt.decode(request.get_signed_cookie('jwt-token'),
+        key=settings.SECRET_KEY, algorithms='HS256').get('user_id')
+        return models.CustomUser.objects.get(id=user_id)
 
 
     def handle_exception(self, exc):
-        if isinstance(exc, django.core.exceptions.PermissionDenied):
+        if exc.__class__.__name__ in (django.core.exceptions.PermissionDenied, django.http.HttpResponseForbidden):
             return django.http.HttpResponse(status=status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS)
 
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
-            return django.core.exceptions.ObjectDoesNotExist
-        return django.http.HttpResponseServerError()
+            return django.http.HttpResponseNotFound()
+        raise exc
 
 
     def check_object_permissions(self, request, song):
@@ -29,8 +38,6 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
         or not song.subscrition in request.user.subscriptions.all():
             raise django.core.exceptions.PermissionDenied()
 
-    def default_response_headers(self):
-        return HTTP_HEADERS()
 
     @decorators.action(methods=['get'], detail=True, description='Obtain Single Song Object.')
     def retrieve(self, request, *args, **kwargs):
@@ -40,25 +47,33 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
             song.save()
 
             self.check_object_permissions(request=request, song=song)
-            return super().retrieve(request, *args, **kwargs)
+            return django.http.HttpResponse(status=200, content=json.dumps({'song': song}))
 
-        except(django.core.exceptions.ObjectDoesNotExist,):
+        except(django.core.exceptions.ObjectDoesNotExist, KeyError):
             return django.http.HttpResponseNotFound()
 
         except(django.core.exceptions.PermissionDenied,):
-            return django.http.JsonResponse({'is_available': False})
+            raise django.core.exceptions.PermissionDenied()
 
 
     @decorators.action(methods=['get'], detail=False, description='Obtain Song Queryset.')
     def list(self, request, *args, **kwargs):
+        """
+        / * Returns song query with following annotation:
+        if song "subscription" in user subscriptions, then available, else Not
+        """
+        try:
+            from django.db import models as db_models
+            user = self.get_request_user(request)
+            user_subs = user.subscriptions.all() if getattr(user, 'subscriptions') else []
+            queryset = self.queryset.annotate(is_available=db_models.Value(
+            db_models.F('subscription') in user_subs, output_field=db_models.BooleanField()))
 
-        from django.db import models as db_models
-        self.queryset = self.get_queryset().annotate(is_available=db_models.Case(
-        db_models.When(subscription__in=request.user.subscriptions.all(), then=True),
+            return django.http.HttpResponse(json.dumps({'queryset': list(queryset.values())},
+            cls=django.core.serializers.json.DjangoJSONEncoder), status=200)
 
-        db_models.When(~db_models.Q(subscription__in=request.user.subscriptions.all()), then=False),
-        output_field=django.db.models.BooleanField()))
-        return super().list(request, *args, **kwargs)
+        except(django.core.exceptions.ObjectDoesNotExist, AttributeError) as exception:
+            raise exception
 
 
 import typing
@@ -75,11 +90,10 @@ class TopWeekSongsAPIView(generics.GenericAPIView):
         // * joins with Song queryset by song ID.
         """
         from django.db import models as db_models
-        # query = [query for query in self.get_queryset().select_related('statistic').order_by('-views')[:10]]
         general_query = self.get_queryset().raw('SELECT * FROM main_song JOIN'
         # / * join implementation between Song and their statistic
         'SELECT * FROM main_statsong ORDER BY views DESC LIMIT 10 ON main_song.id=main_statsong.id').annotate(
-        views_count=db_models.F('views')).order_by('-views_count')[:10]
+        views_count=db_models.F('views')).order_by(db_models.F('views_count').desc())[:10]
         return db_models.QuerySet(general_query)
 
 
@@ -114,17 +128,6 @@ class SongOwnerGenericView(generics.GenericAPIView):
             return django.http.HttpResponse(status=status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS)
 
 
-    @cache.cache_page(timeout=60 * 5)
-    def get(self, request):
-        try:
-            song = self.get_queryset().get(id=request.query_params.get('song_id'))
-            return django.http.JsonResponse(
-            {'form': forms.SongForm(initial={elem: getattr(song, elem)
-            for elem, value in song._meta.get_fields()})})
-
-        except(django.core.exceptions.ObjectDoesNotExist,) as exception:
-            raise exception
-
     @transaction.atomic
     @http.etag(etag_func=get_song_etag)
     @csrf.requires_csrf_token
@@ -150,6 +153,7 @@ class SongOwnerGenericView(generics.GenericAPIView):
             transaction.rollback()
             raise exception
 
+
     @transaction.atomic
     @csrf.requires_csrf_token
     def delete(self, request):
@@ -166,10 +170,5 @@ class SongOwnerGenericView(generics.GenericAPIView):
             raise exception
 
 
-
-@decorators.api_view(['GET'])
-def some_method(request):
-    logger.debug('data has been obtained...')
-    return django.http.HttpResponse(status=200)
 
 

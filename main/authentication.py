@@ -5,8 +5,8 @@ import django.core.exceptions
 
 import rest_framework.exceptions
 from rest_framework import authentication
-
 from rest_framework.authentication import get_authorization_header
+
 import jwt, json
 from django.conf import settings
 

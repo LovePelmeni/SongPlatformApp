@@ -30,30 +30,35 @@ class IsNotBlocked(permissions.BasePermission):
 class HasSubscription(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        song = models.Song.objects.get(id=request.query_params.get('song_id'))
-        if getattr(song, 'subscriptions'):
-            if self.has_sub_permission(user_id=request.user.id,
-            sub_id=song.subscriptions.dict().get('subscription_id')):
-                return True
-            return django.core.exceptions.PermissionDenied()
-        return True
+        try:
+            song = models.Song.objects.get(id=request.query_params.get('song_id'))
+            if getattr(song, 'subscription'):
+                if song.subscription in request.user.subscriptions.all():
+                    return True
+                return django.core.exceptions.PermissionDenied()
+            return True
+        except(django.core.exceptions.ObjectDoesNotExist, KeyError, AttributeError):
+            return False
 
 
 class HasSongPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        return models.Song.objects.get(
-        id=request.query_params.get('song_id')).has_permission(request.user)
-
-
+        try:
+            return models.Song.objects.get(
+            id=request.query_params.get('song_id')).has_permission(request.user)
+        except(django.core.exceptions.ObjectDoesNotExist,):
+            return False
 
 class IsAlbumOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
         try:
-            return request.user == models.Album.objects.filter(
-            id=request.query_params.get('album_id')).owner
-        except(django.core.exceptions.ObjectDoesNotExist,):
+            return request.user in models.Album.objects.get(id=
+            request.query_params.get('album_id')).owner.all()
+        except(django.core.exceptions.ObjectDoesNotExist, AttributeError,):
             raise django.core.exceptions.PermissionDenied()
+
+
 
 

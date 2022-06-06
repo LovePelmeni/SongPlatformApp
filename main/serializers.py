@@ -85,5 +85,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         model = models.Subscription
         fields = '__all__'
 
+class CatalogSongSerializer(serializers.Serializer):
+
+    pass
+
+class SongUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Song
+        fields = '__all__'
+
 
 

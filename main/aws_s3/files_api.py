@@ -4,17 +4,9 @@ from celery import shared_task
 
 from django.conf import settings
 import logging, datetime
+from . import exceptions
 
 logger = logging.getLogger(__name__)
-
-class AwsFileNotFoundError(BaseException):
-
-    def __init__(self, status_code, message=None):
-        self.message = message
-        self.status_code = status_code
-
-    def __call__(self):
-        raise self
 
 
 def _get_file_aws_file(bucket_name, file_link: str):
@@ -31,7 +23,7 @@ def _get_file_aws_file(bucket_name, file_link: str):
     except botocore.exceptions.ClientError as aws_ex:
         if aws_ex.response['Error']['Code'] == '404':
             message = 'Video file is not found :('
-            raise AwsFileNotFoundError(
+            raise exceptions.AwsFileNotFoundError(
             message=message, status_code=404)
 
 
