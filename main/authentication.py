@@ -22,7 +22,7 @@ class UserAuthenticationClass(authentication.BaseAuthentication):
 
     def authenticate(self, request):
 
-        if not 'Authorization' in request.META.keys():
+        if not 'Authorization' in request.headers.keys():
             raise rest_framework.exceptions.PermissionDenied()
         try:
             auth = get_authorization_header(request).split(' ')

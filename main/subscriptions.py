@@ -5,7 +5,7 @@ from django.views.decorators import csrf, cache
 import django.http
 from . import authentication as api_auth, serializers
 
-from . import models, authentication as auth
+from . import models, authentication as auth, dropbox as dropbox_storage
 import django.db.models
 from django.db import transaction
 
@@ -19,6 +19,8 @@ class SubscriptionGenericView(generics.GenericAPIView):
     queryset = models.Subscription.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (auth.UserAuthenticationClass,)
+    dropbox_storage = dropbox_storage.files_api.DropboxBucket(
+    getattr(settings, 'DROPBOX_SUBSCRIPTION_PREVIEW_BUCKET_NAME'))
 
     def handle_exception(self, exc):
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
@@ -28,12 +30,14 @@ class SubscriptionGenericView(generics.GenericAPIView):
     @csrf.requires_csrf_token
     def post(self, request):
         try:
-            from . import aws_s3
+            from . import dropbox
             serializer = serializers.SubscriptionSerializer(request.data, many=False)
 
             if 'preview' in request.FILES.keys():
-                file_link = aws_s3.files_api._save_to_aws(bucket_name=getattr(
-                settings, 'BUCKET_PREVIEW_NAME'), file=request.FILES.get('preview'))
+                preview = request.FILES.get('preview')
+
+                file_link = self.dropbox_storage.upload(file=request.FILES.get('preview'),
+                filename=preview.name.split('.')[0])
                 serializer.validated_data.update({'preview': file_link})
 
             if serializer.is_valid(raise_exception=True):
@@ -55,9 +59,9 @@ class SubscriptionGenericView(generics.GenericAPIView):
             serializer = serializers.SubscriptionSerializer(request.data, many=False)
 
             if 'preview' in serializer.validated_data.keys():
-                # file_link = aws_s3.files_api._save_to_aws(bucket_name=getattr(
-                #
-                # settings, 'BUCKET_PREVIEW_NAME'), file=request.FILES.get('preview'))
+                file_link = dropbox_storage.files_api._save_to_aws(bucket_name=getattr(
+
+                settings, 'BUCKET_PREVIEW_NAME'), file=request.FILES.get('preview'))
                 serializer.validated_data.update({'preview': file_link})
 
             if serializer.is_valid(raise_exception=True):
@@ -137,5 +141,7 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
         except(django.db.IntegrityError, django.db.ProgrammingError,) as exception:
             transaction.rollback()
             raise exception
+
+
 
 

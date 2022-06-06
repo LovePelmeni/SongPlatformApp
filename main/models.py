@@ -63,6 +63,20 @@ class DistributedController(object):
 
 distributed_controller = DistributedController
 
+
+class SongQueryset(django.db.models.QuerySet):
+
+    def create(self, **kwargs):
+        try:
+            song = self.model(**kwargs)
+            song.create_statistic_model()
+            return song
+        except(NotImplementedError):
+            raise NotImplementedError
+
+class SongManager(django.db.models.manager.BaseManager.from_queryset(SongQueryset)):
+    pass
+
 class Song(models.Model):
 
     objects = models.Manager()
@@ -73,17 +87,9 @@ class Song(models.Model):
     audio_file = models.CharField(verbose_name='AWS Audio File Link', null=False, max_length=300)
 
     def delete(self, using=None, **kwargs):
-        from . import aws_s3
-        aws_s3.files_api._delete_from_aws_storage(file_link=kwargs.get('file_link'))
+        from . import dropbox
+        dropbox.files_api._delete_from_aws_storage(file_link=kwargs.get('file_link'))
         return super().delete(using=using, **kwargs)
-
-    @staticmethod
-    def get_etag(song):
-        return "%s-%s" % (song.song_name, datetime.datetime.now())
-
-    def set_etag(self, etag):
-        self.etag = etag
-        self.save()
 
     def has_permission(self, user):
         import django.core.exceptions
@@ -92,7 +98,8 @@ class Song(models.Model):
         raise django.core.exceptions.PermissionDenied()
 
     def create_statistic_model(self):
-        return StatSong.objects.create(song=self)
+        StatSong.objects.create(song=self)
+
 
 class StatSong(models.Model):
 
@@ -253,13 +260,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def apply_new_avatar(self, avatar):
 
-        from . import aws_s3
+        from . import dropbox
         bucket_name = settings.AWS_IMAGE_BUCKET_NAME
-        aws_s3.files_api._delete_from_aws_storage(bucket_name=bucket_name,
-        file_link=self.avatar_image)
+        dropbox.files_api._delete_from_aws_storage(bucket_name=bucket_name,
+                                                   file_link=self.avatar_image)
 
-        avatar_url = aws_s3.files_api._save_file_to_aws(bucket_name=bucket_name,
-        file=avatar)
+        avatar_url = dropbox.files_api._save_file_to_aws(bucket_name=bucket_name,
+                                                         file=avatar)
         self.avatar_image = avatar_url
         self.save(using=self._db)
 

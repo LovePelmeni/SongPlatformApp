@@ -16,45 +16,6 @@ services:
     networks:
       - main_app_network
 
-  rabbitmq_message_database:
-
-    container_name: rabbitmq_message_database
-    image: postgres:latest
-
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: rabbitmq_message_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Kirill
-    ports:
-      - 5430:5430
-    command:
-      - -p 5430
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "rabbitmq_message_db"]
-      interval: 15s
-      retries: 5
-    networks:
-      - main_app_network
-
-  rabbitmqserver:
-    container_name: rabbitmq_server
-    image: rabbitmq:3-management
-    environment:
-      - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
-      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log [{console,[{level,debug}]}]
-    volumes:
-      - ./rabbitmq-entrypoint.sh:/init.sh
-      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      - ./definitions.json:/etc/rabbitmq/definitions.json
-    ports:
-      - 15672:15672
-      - 5671:5672
-    networks:
-      - main_app_network
-    depends_on:
-      - rabbitmq_message_database
-
   database:
     build: ./postgres/.
     container_name: main_app_postgresql_container

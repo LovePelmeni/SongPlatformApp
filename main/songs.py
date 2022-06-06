@@ -1,7 +1,7 @@
 import django.core.exceptions
 from rest_framework import generics, viewsets, mixins, decorators, status, permissions
 
-from . import models, authentication, permissions as api_permissions
+from . import models, authentication, permissions as api_permissions, dropbox as dropbox_storage
 import django.http
 from django.conf import settings
 
@@ -14,8 +14,8 @@ import json, django.core.serializers.json
 class SongCatalogViewSet(viewsets.ModelViewSet):
 
     queryset = models.Song.objects.all()
-    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    # authentication_classes = (authentication.UserAuthenticationClass,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    authentication_classes = (authentication.UserAuthenticationClass,)
 
     def get_request_user(self, request):
         import jwt
@@ -65,6 +65,7 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
         try:
             from django.db import models as db_models
             user = self.get_request_user(request)
+
             user_subs = user.subscriptions.all() if getattr(user, 'subscriptions') else []
             queryset = self.queryset.annotate(is_available=db_models.Value(
             db_models.F('subscription') in user_subs, output_field=db_models.BooleanField()))
@@ -109,12 +110,7 @@ class SongOwnerGenericView(generics.GenericAPIView):
 
     queryset = models.Song.objects.all()
     permissions = (api_permissions.HasSongPermission,)
-
-
-    def get_song_etag(self, request):
-        return self.get_queryset().filter(
-        id=request.query_params.get('song_id')).first().etag
-
+    song_bucket = dropbox_storage.files_api.DropboxBucket(bucket_name=getattr(settings, 'DROPBOX_SONG_AUDIO_FILE'))
 
     def handle_exception(self, exc):
 
@@ -127,9 +123,7 @@ class SongOwnerGenericView(generics.GenericAPIView):
         if isinstance(exc, django.core.exceptions.PermissionDenied):
             return django.http.HttpResponse(status=status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS)
 
-
     @transaction.atomic
-    @http.etag(etag_func=get_song_etag)
     @csrf.requires_csrf_token
     def put(self, request):
         try:
@@ -139,9 +133,10 @@ class SongOwnerGenericView(generics.GenericAPIView):
             if serializers.is_valid(raise_exception=True):
                 if 'preview' in request.FILES.keys():
 
-                    file_link = aws_s3.files_api._save_to_aws(
-                    bucket_name=getattr(settings, 'SONG_AUDIO_BUCKET_NAME'), file=request.FILES.get('preview'))
-                    serializer.validated_data.update({'preview': file_link})
+                    filename = request.FILES.get('preview').name.split('.')[0]
+                    file_link = self.song_bucket.upload(file=request.FILES.get('preview'),
+                    filename='%s-%s' % (filename, datetime.datetime.now()))
+                    serializer.validated_data.update({'preview': file_link.dict().get('file_link')})
 
                 for elem, value in serializer.validated_data.items():
                     song.__setattr__(elem, value)
@@ -152,7 +147,6 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
-
 
     @transaction.atomic
     @csrf.requires_csrf_token
@@ -168,7 +162,6 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
-
 
 
 

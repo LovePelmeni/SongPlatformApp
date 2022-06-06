@@ -6,8 +6,8 @@ import datetime, json
 from django import db
 from django import urls
 
-from . import permissions as api_perms, models, aws_s3, authentication, serializers as api_serializers
-from .aws_s3 import exceptions
+from . import permissions as api_perms, models, dropbox as dropbox_storage,\
+authentication, serializers as api_serializers
 
 import jwt, logging
 from django.views.decorators import csrf, cache
@@ -60,6 +60,8 @@ class CreateUserAPIView(views.APIView):
 
     # permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
     serializer_class = api_serializers.UserSerializer
+    dropbox_storage = dropbox_storage.files_api.DropboxBucket(
+    getattr(settings, 'DROPBOX_CUSTOMER_AVATAR_BUCKET_NAME'))
 
     @transaction.atomic
     def post(self, request):
@@ -69,8 +71,12 @@ class CreateUserAPIView(views.APIView):
 
             user = models.CustomUser.objects.create_user(**serializer.validated_data)
 
-            # if request.FILES.get('avatar_image'):
-            #     aws_s3.files_api._save_file_to_aws(request, user)
+            if request.FILES.get('avatar_image'):
+                file = request.FILES.get('avatar_image')
+                file_link = self.dropbox_storage.upload(file=file, filename=file.name.split('.')[0])
+                user.avatar_link = file_link
+                user.save()
+
             try:
                 token = apply_jwt_token(user=user)
                 login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
@@ -170,5 +176,4 @@ class LoginAPIView(views.APIView):
             login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
             return response
         return django.http.HttpResponse(status=400)
-
 

@@ -71,3 +71,4 @@ class AlbumAPIView(views.APIView):
             transaction.rollback()
             raise django.core.exceptions.ObjectDoesNotExist()
 
+

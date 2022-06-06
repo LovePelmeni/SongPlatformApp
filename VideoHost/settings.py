@@ -181,27 +181,16 @@ if not DEBUG:
         }
     }
 
-    AWS_SONG_BUCKET_NAME = os.environ.get('AWS_SONG_BUCKET_NAME')
-    AWS_PREVIEWS_BUCKET_NAME = os.environ.get('AWS_PREVIEWS_BUCKET_NAME')
-    AWS_AVATARS_BUCKET_NAME = os.environ.get('AWS_AVATARS_BUCKET_NAME')
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    DROPBOX_SONG_AUDIO_FILE_BUCKET = os.environ.get('DROPBOX_SONG_AUDIO_FILE_BUCKET')
+    DROPBOX_SUBSCRIPTION_PREVIEW_FILE_BUCKET = os.environ.get('DROPBOX_SUBSCRIPTION_PREVIEW_FILE_BUCKET')
+    DROPBOX_CUSTOMER_AVATAR_FILE_BUCKET = os.environ.get('DROPBOX_CUSTOMER_AVATAR_FILE_BUCKET')
 
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN')
+    RABBITMQ_HOST = os.getenv('RABBITMQ_HOST')
+    RABBITMQ_USER = os.getenv('RABBITMQ_USER')
+    RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD')
+    RABBITMQ_PORT = os.getenv('RABBITMQ_PORT')
+    RABBITMQ_VHOST = os.getenv('RABBITMQ_VHOST')
 
-    AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
-    }
-
-    AWS_STATIC_LOCATION = 'static'
-    STATICFILES_STORAGE = 'main.aws_s3.storage_backends.StaticStorage'
-    AWS_STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
-
-    AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
-    DEFAULT_FILE_STORAGE = 'main.aws_s3.storage_backends.PublicMediaStorage'
-
-    AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
-    PRIVATE_FILE_STORAGE = 'main.aws_s3.storage_backends.PrivateMediaStorage'
 
 
 else:
@@ -234,28 +223,15 @@ else:
             'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
+    DROPBOX_SONG_AUDIO_FILE_BUCKET = ''
+    DROPBOX_SUBSCRIPTION_PREVIEW_FILE_BUCKET = ''
+    DROPBOX_CUSTOMER_AVATAR_FILE_BUCKET = ''
 
-    AWS_SONG_AUDIO_BUCKET_NAME = ''
-    AWS_SUBSCRIPTION_PREVIEWS_BUCKET_NAME = ''
-    AWS_USER_AVATARS_BUCKET_NAME = ''
-    AWS_ACCESS_KEY_ID = ''
-
-    AWS_SECRET_ACCESS_KEY = ''
-    AWS_S3_CUSTOM_DOMAIN = ''
-
-    AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
-    }
-
-    AWS_STATIC_LOCATION = 'static'
-    STATICFILES_STORAGE = 'main.aws_s3.storage_backends.StaticStorage'
-    AWS_STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
-
-    AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
-    DEFAULT_FILE_STORAGE = 'main.aws_s3.storage_backends.PublicMediaStorage'
-
-    AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
-    PRIVATE_FILE_STORAGE = 'main.aws_s3.storage_backends.PrivateMediaStorage'
+    RABBITMQ_HOST = ''
+    RABBITMQ_USER = ''
+    RABBITMQ_PASSWORD = ''
+    RABBITMQ_PORT = ''
+    RABBITMQ_VHOST = ''
 
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
