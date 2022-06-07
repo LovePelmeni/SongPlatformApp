@@ -8,3 +8,12 @@ COPY . .
 
 RUN chmod +x ./proj-entrypoint.sh
 ENTRYPOINT ["sh", "proj-entrypoint.sh"]
+
+
+
+
+
+
+
+
+

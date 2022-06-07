@@ -55,21 +55,28 @@ def delete_user(request):
         logger.debug('[USER-API-EXCEPTION]. Could not delete user profile. time - [%s]' % datetime.datetime.now())
         return django.http.HttpResponseServerError(content=json.dumps({'error': 'Delete Profile Failure'}))
 
-    except():
+    except() as exception:
         transaction.rollback()
+        raise exception
 
 class CreateUserAPIView(views.APIView):
 
-    permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
+
     serializer_class = api_serializers.UserSerializer
     dropbox_storage = files_api.DropBoxBucket(
     getattr(settings, 'DROPBOX_CUSTOMER_AVATAR_FILE_PATH'))
 
-    def get_authenticators(self):
-        return (authentication.UserAuthenticationClass,)
+    def check_permissions(self, request):
+        if not request.META.get('Authorization'):
+            return True
+        return django.core.exceptions.PermissionDenied()
+
 
     def handle_exception(self, exc):
-        return exc
+        if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
+            return django.http.HttpResponseNotFound()
+        return django.http.HttpResponse(status=status.HTTP_200_OK)
+
 
     @transaction.atomic
     def post(self, request):
@@ -109,7 +116,7 @@ class EditUserAPIView(views.APIView):
 
     def handle_exception(self, exc):
         if isinstance(exc, django.db.IntegrityError) or isinstance(exc, django.db.ProgrammingError):
-            pass
+            return django.http.HttpResponseServerError()
         return django.http.HttpResponseServerError()
 
     @csrf.requires_csrf_token
@@ -180,10 +187,13 @@ class LoginAPIView(views.APIView):
 
         response = django.http.HttpResponse(status=200)
         user = authenticate(username=request.data.get('username'),
+
         password=request.data.get('password'))
         if user is not None:
             response.set_signed_cookie('jwt-token', apply_jwt_token(user))
             login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
             return response
         return django.http.HttpResponse(status=400)
+
+
 

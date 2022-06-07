@@ -53,7 +53,6 @@ AUTHENTICATION_BACKENDS = (
 
     'main.backends.AdminAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
-    'xmpp_backends.django.auth_backends.XmppBackendBackend'
 )
 
 
@@ -69,9 +68,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    # 'main.middlewares.CheckAuthUserMiddleware',
-    # 'main.middlewares.CheckBlockedUserMiddleware'
     'main.middlewares.SetUpAuthorizationHeaderMiddleware'
 ]
 

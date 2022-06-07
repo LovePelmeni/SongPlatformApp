@@ -48,6 +48,9 @@ class DistributedController(object):
 
     @staticmethod
     def handle_transaction_response(queue, method, properties, body):
+        """
+        / * Handles incoming response messages from rabbitmq.
+        """
         try:
             signal_name = str(queue.method.queue)
             if json.loads(body).decode('utf-8').get('status_code') in ('200', '201'):
@@ -102,7 +105,7 @@ class SongQueryset(django.db.models.QuerySet):
 
     def create(self, **kwargs):
         try:
-            song = self.model(**kwargs).create()
+            song = self.model(**kwargs)
             song.create_statistic_model()
             return song
         except(NotImplementedError):
@@ -118,18 +121,20 @@ class Song(models.Model):
 
     song_name = models.CharField(verbose_name='Song Name', null=False, max_length=100)
     song_description = models.TextField(verbose_name='Song Description', null=True, max_length=100)
-    audio_file = models.CharField(verbose_name='AWS Audio File Link', null=False, max_length=300)
+    audio_file = models.CharField(verbose_name='AWS Audio File Link', null=True, max_length=300)
 
     def delete(self, using=None, **kwargs):
         from . import dropbox
         try:
+            from django.conf import settings
             bucket = dropbox.files_api.DropBoxBucket(path=getattr(settings, 'DROPBOX_SONG_AUDIO_FILE_PATH'))
             bucket.remove(file_link=self.audio_file.value_to_string(self.audio_file))
             bucket.remove(file_link=self.preview.value_to_string(self.preview))
             return super().delete(using=using, **kwargs)
 
-        except(django.core.exceptions.ObjectDoesNotExist,):
-            raise NotImplementedError
+        except(django.core.exceptions.ObjectDoesNotExist,
+        dropbox.exceptions.DropboxFileRemoveFailed, AttributeError):
+            pass
 
     def update(self, **new_kwargs):
         for element, value in new_kwargs.items():
@@ -137,7 +142,7 @@ class Song(models.Model):
             self.save(using=self._db)
         return self
 
-    def upload_avatar(self, avatar):
+    def upload_preview(self, preview):
         pass
 
     def has_permission(self, user):
@@ -180,7 +185,10 @@ class SubscriptionQueryset(models.QuerySet):
         try:
             model = self.model(**kwargs)
             model.distributed_create()
-            return model
+            if 'preview' in kwargs.keys():
+                model.upload_preview(preview=kwargs['preview'])
+            return model.save(using=self._db)
+
         except(NotImplementedError,):
             raise NotImplementedError
 
@@ -215,6 +223,9 @@ class Subscription(models.Model):
 
     def __str__(self):
         return self.subscription_name
+
+    def upload_preview(self, preview):
+        pass
 
     def distributed_create(self, new_credentials: dict):
         pass
@@ -310,9 +321,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def apply_new_avatar(self, avatar):
 
         from . import dropbox
-        bucket_name = settings.AWS_IMAGE_BUCKET_NAME
-        dropbox.files_api._delete_from_aws_storage(bucket_name=bucket_name,
-        file_link=self.avatar_image)
+        filename = avatar.name.split('.')[0]
+        dropbox.files_api.DropBoxBucket(path=getattr(settings,
+        'DROPBOX_CUSTOMER_AVATAR_FILE_PATH')).upload(filename=filename, file=avatar)
         self.avatar_image = avatar_url
         self.save(using=self._db)
 
@@ -352,3 +363,19 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         # return result
         pass
 
+class BlockList(models.Model):
+
+    def clean(self):
+        model = self.__class__
+        if not len(model.objects.all()) > 1:
+            raise django.core.exceptions.ValidationError(
+            message='Len Of the Block List objects is overflowed. Max 1.')
+        return self
+
+    outcasts = models.ForeignKey(to=CustomUser, on_delete=models.PROTECT)
+
+    def remove_from_list(self, user):
+        pass
+
+    def add_to_list(self, user):
+        pass

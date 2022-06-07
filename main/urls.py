@@ -10,8 +10,9 @@ urlpatterns = []
 
 songs_urlpatterns = [
 
-    path('top/week/songs/', songs.TopWeekSongsAPIView.as_view(), name='top-week-songs'),
-    path('song/', songs.SongOwnerGenericView.as_view(), name='song'),
+    path('top/week/song/', songs.TopWeekSongsViewSet.as_view({'get': 'retrieve'}), name='top-week-songs'),
+    path('top/week/songs/', songs.TopWeekSongsViewSet.as_view({'get': 'list'}), name='top-week-song'),
+    path('song/', songs.SongGenericView.as_view(), name='song'),
 
     path('get/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
     path('get/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),

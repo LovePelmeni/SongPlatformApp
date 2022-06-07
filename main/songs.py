@@ -3,6 +3,7 @@ from rest_framework import generics, viewsets, mixins, decorators, status, permi
 
 from . import models, authentication, permissions as api_permissions, dropbox as dropbox_storage
 import django.http
+from django.db import models as db_models
 
 from django.conf import settings
 from django.views.decorators import http, cache, csrf
@@ -50,7 +51,7 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
             self.check_object_permissions(request=request, song=song)
             return django.http.HttpResponse(status=200, content=json.dumps({'song': song}))
 
-        except(django.core.exceptions.ObjectDoesNotExist, KeyError):
+        except(django.core.exceptions.ObjectDoesNotExist, KeyError, AttributeError):
             return django.http.HttpResponseNotFound()
 
         except(django.core.exceptions.PermissionDenied,):
@@ -81,36 +82,55 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
 import typing
 from django.db import models as db_models
 
-class TopWeekSongsAPIView(generics.GenericAPIView):
+class TopWeekSongsViewSet(viewsets.ModelViewSet):
 
     permission_classes = (permissions.AllowAny,)
     queryset = models.Song.objects.all()
+    authentication_classes = (authentication.UserAuthenticationClass,)
 
-    def get_most_viewed_queryset(self) -> db_models.QuerySet:
+    def handle_exception(self, exc):
+        if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
+            return django.http.HttpResponseNotFound()
+        return django.http.HttpResponseServerError()
+
+    @decorators.action(methods=['get'], detail=True)
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            song_id = request.query_params.get('song_id')
+            song = self.get_most_viewed_queryset(
+            models.Song.objects.get(id=song_id))
+
+            return django.http.HttpResponse(json.dumps({'song': song},
+            cls=django.core.serializers.json.DjangoJSONEncoder))
+
+        except(django.core.exceptions.ObjectDoesNotExist) as exception:
+            raise exception
+
+    def get_most_viewed_queryset(self, queryset) -> db_models.QuerySet:
         """
         / * returns most listened songs during this week.
         // * joins with Song queryset by song ID.
         """
-        from django.db import models as db_models
-        general_query = self.get_queryset().raw('SELECT * FROM main_song JOIN'
-        # / * join implementation between Song and their statistic
-        'SELECT * FROM main_statsong ORDER BY views DESC LIMIT 10 ON main_song.id=main_statsong.id').annotate(
-        views_count=db_models.F('views')).order_by(db_models.F('views_count').desc())[:10]
-        return db_models.QuerySet(general_query)
+        try:
+            general_query = self.get_queryset().select_related('statistic').annotate(
+            views_count=db_models.F('statistic__views')).order_by(db_models.F('views_count').desc())[:10]
+            return general_query
+        except(AttributeError,):
+            raise NotImplementedError
 
-
-    @cache.cache_page(timeout=60 * 5)
-    def get(self, request):
-        parsed_queryset = self.get_most_viewed_queryset()
+    @decorators.action(methods=['get'], detail=False)
+    def list(self, request, *args, **kwargs):
+        parsed_queryset = list(self.get_most_viewed_queryset(self.get_queryset()).values())
         return django.http.HttpResponse(
-        data=json.dumps({'queryset': parsed_queryset.values()},
+        content=json.dumps({'queryset': parsed_queryset},
         cls=django.core.serializers.json.DjangoJSONEncoder), status=200)
 
 
-class SongOwnerGenericView(generics.GenericAPIView):
+class SongGenericView(generics.GenericAPIView):
 
     queryset = models.Song.objects.all()
-    permissions = (api_permissions.HasSongPermission,)
+    permissions = (api_permissions.HasSongPermission, permissions.IsAuthenticated,)
+    authentication_classes = (authentication.UserAuthenticationClass,)
     song_bucket = dropbox_storage.files_api.DropBoxBucket(
     path=getattr(settings, 'DROPBOX_SONG_AUDIO_FILE_PATH'))
 
@@ -125,14 +145,24 @@ class SongOwnerGenericView(generics.GenericAPIView):
         if isinstance(exc, django.core.exceptions.PermissionDenied):
             return django.http.HttpResponse(status=status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS)
 
+        return django.http.HttpResponseServerError()
+
+    @csrf.csrf_exempt
+    def post(self, request):
+        status_code = 400
+        if serializers.SongCreateSerializer(data=request.data, many=False).is_valid(raise_exception=True):
+            models.Song.objects.create(**request.data)
+            status_code = 200
+        return django.http.HttpResponse(status=status_code)
+
+    @csrf.csrf_exempt
     @transaction.atomic
-    @csrf.requires_csrf_token
     def put(self, request):
         try:
             song = self.get_queryset().get(id=request.query_params.get('song_id'))
-            serializer = serializers.SongUpdateSerializer(request.data, many=False)
+            serializer = serializers.SongUpdateSerializer(data=request.data, many=False)
 
-            if serializers.is_valid(raise_exception=True):
+            if serializer.is_valid(raise_exception=True):
                 if 'preview' in request.FILES.keys():
 
                     filename = request.FILES.get('preview').name.split('.')[0]
@@ -150,8 +180,8 @@ class SongOwnerGenericView(generics.GenericAPIView):
             transaction.rollback()
             raise exception
 
+    @csrf.csrf_exempt
     @transaction.atomic
-    @csrf.requires_csrf_token
     def delete(self, request):
         try:
             self.get_queryset().get(
@@ -164,6 +194,5 @@ class SongOwnerGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
-
 
 

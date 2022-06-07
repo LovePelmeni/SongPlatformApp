@@ -103,6 +103,7 @@ class SongUpdateSerializer(SongCreateSerializer):
 
     def __init__(self, **kwargs):
         super(SongUpdateSerializer, self).__init__(**kwargs)
+        for field in self.get_fields():
+            self.fields[field].__setattr__('required', False)
 
-    def validate(self, attrs):
-        return super().validate(attrs)
+

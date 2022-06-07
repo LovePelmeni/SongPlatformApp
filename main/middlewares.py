@@ -12,24 +12,32 @@ class SetUpAuthorizationHeaderMiddleware(deprecation.MiddlewareMixin):
 
     def process_request(self, request):
         try:
-            if not request.META.get('Authorization'):
-                request.META['Authorization'] = 'Bearer %s' % request.get_signed_cookie('jwt-token')
+            request.META['Authorization'] = \
+            'Bearer %s' % request.get_signed_cookie('jwt-token')
             return None
         except(KeyError,):
             return None
 
 
-class CheckBlockedUserMiddleware(deprecation.MiddlewareMixin):
+class CheckBlockedUserMiddleware(object):
 
-    def process_request(self, request):
-        try:
-            if request.user.is_blocked:
-                request.headers['IS_BLOCKED'] = True
-                return None
-        except AttributeError:
-            return None
+    def get_blocked_list(self):
+        return models.BlockList.outcasts.all()
 
+    def __init__(self, get_response):
+        self.get_response = get_response
+        super(CheckBlockedUserMiddleware, self).__init__(get_response)
 
+    def __call__(self, request):
+
+        response = self.get_response(request)
+        if not request.META.get('HTTP_REFERER'):
+            return response
+
+        if request.user in get_blocked_list():
+            return django.http.HttpResponseForbidden()
+
+        return response
 
 
 
