@@ -4,6 +4,7 @@ python manage.py makemigrations
 echo "Migrating..."
 python manage.py migrate
 
+echo "Migrated..."
 echo "Running Tests..."
 
 pytest -q ./tests/services_integration_tests.py

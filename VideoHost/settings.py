@@ -72,6 +72,7 @@ MIDDLEWARE = [
 
     # 'main.middlewares.CheckAuthUserMiddleware',
     # 'main.middlewares.CheckBlockedUserMiddleware'
+    'main.middlewares.SetUpAuthorizationHeaderMiddleware'
 ]
 
 ROOT_URLCONF = 'VideoHost.urls'
@@ -166,15 +167,6 @@ if not DEBUG:
 
     ]
 
-
-    CHANNEL_LAYER = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                "hosts": [('redis', 6379)],
-            },
-        }}
-
     CACHE = {
         'default': {
             'BACKEND': 'django.core.cache.backends.RedisCache',
@@ -229,7 +221,11 @@ else:
         }
     }
 
-    DROPBOX_API_ENDPOINT = 'http://dropbox_api/files/api/'
+    import os
+    DROPBOX_SONG_PREVIEW_FILE_PATH = os.environ.get('DROPBOX_SONG_PREVIEW_FILE_PATH')
+    DROPBOX_SONG_AUDIO_FILE_PATH = os.environ.get('DROPBOX_SONG_AUDIO_FILE_PATH')
+    DROPBOX_SUBSCRIPTION_PREVIEW_FILE_PATH = os.environ.get('DROPBOX_SUBSCRIPTION_PREVIEW_FILE_PATH')
+    DROPBOX_CUSTOMER_AVATAR_FILE_PATH = os.environ.get('DROPBOX_CUSTOMER_AVATAR_FILE_PATH')
 
     RABBITMQ_HOST = 'localhost'
     RABBITMQ_USER = 'rabbitmq_user'

@@ -3,13 +3,13 @@ from rest_framework import generics, viewsets, mixins, decorators, status, permi
 
 from . import models, authentication, permissions as api_permissions, dropbox as dropbox_storage
 import django.http
-from django.conf import settings
 
+from django.conf import settings
 from django.views.decorators import http, cache, csrf
+
 from django.db import transaction
 from . import serializers
 import json, django.core.serializers.json
-
 
 
 class SongCatalogViewSet(viewsets.ModelViewSet):
@@ -32,7 +32,7 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
             return django.http.HttpResponseNotFound()
 
-        raise exc
+        return django.http.HttpResponseServerError()
 
 
     def check_object_permissions(self, request, song):
@@ -112,7 +112,7 @@ class SongOwnerGenericView(generics.GenericAPIView):
     queryset = models.Song.objects.all()
     permissions = (api_permissions.HasSongPermission,)
     song_bucket = dropbox_storage.files_api.DropBoxBucket(
-    path=getattr(settings, 'SONG_AUDIO_FILE_PATH'))
+    path=getattr(settings, 'DROPBOX_SONG_AUDIO_FILE_PATH'))
 
     def handle_exception(self, exc):
 

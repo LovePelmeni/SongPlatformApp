@@ -23,19 +23,13 @@ AVATAR_FILES_TEMP_PATH = tempfile.mktemp(prefix='/avatar/')
 
 class DropBoxFileLink(pydantic.BaseModel):
 
-    file_link: str
-
-    @pydantic.validator('file_link')
-    def validate_file_link(cls, value):
-        if not re.match(pattern='link-pattern', string=value):
-            raise pydantic.ValidationError()
-        return value
+    file_link: str # full path not restricted.
 
 
 class DropBoxBucket(object):
     """
-    / * Class Represents AWS S3 Bucket and supports following operations.
-    / * It is already supposed that all the paths and buckets already exist...
+    / * Class Represents DropBox Bucket and supports following operations.
+    / * It is already supposed that all the path names already exist...
     """
     def __init__(self, path):
         self.path = path
@@ -88,6 +82,7 @@ class DropBoxBucket(object):
             dropbox_app.files_delete_v2(path=file_link)
         except(dropbox.exceptions.DropboxException, ):
             raise exceptions.DropboxFileRemoveFailed
+
 
 
 

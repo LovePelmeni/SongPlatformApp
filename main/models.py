@@ -22,7 +22,6 @@ SIGNALS = {}
 #     SIGNALS[event] = django.dispatch.dispatcher.Signal()
 
 
-
 import json
 class DistributedController(object):
     """
@@ -54,6 +53,7 @@ class DistributedController(object):
             if json.loads(body).decode('utf-8').get('status_code') in ('200', '201'):
                 signals[signal_name].send(transaction_data=body)
                 logger.debug('new transaction for %s has been passed successfully.' % queue.method.queue)
+
 
         except(pika.exceptions.ConnectionClosed, pika.exceptions.ConnectionError,) as exception:
             logger.error('RABBITMQ CONNECTION LOST, SEEMS LIKE AN ERROR: %s' % exception)
@@ -132,7 +132,10 @@ class Song(models.Model):
             raise NotImplementedError
 
     def update(self, **new_kwargs):
-        pass
+        for element, value in new_kwargs.items():
+            self.__setattr__(element, value)
+            self.save(using=self._db)
+        return self
 
     def upload_avatar(self, avatar):
         pass

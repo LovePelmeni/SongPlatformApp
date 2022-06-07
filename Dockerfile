@@ -1,14 +1,10 @@
-FROM python:3.18.13-buster
-WORKDIR /project/app/
+FROM ubuntu:20.04
 
-ENV PYTHONUNBUFFERED=1
-RUN pip --upgrade pip
-COPY ./requirements.txt requirements.txt
-
-RUN pip install psycopg2-binary --no-cache-dir --no-input
+RUN apt-get install python3.9 -y
+RUN pip install --upgrade pip
+COPY .project/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
-
 COPY . .
-ENTRYPOINT ["sh", "./proj-entrypoint.sh"]
 
-
+RUN chmod +x ./proj-entrypoint.sh
+ENTRYPOINT ["sh", "proj-entrypoint.sh"]

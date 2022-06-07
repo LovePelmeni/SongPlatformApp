@@ -18,5 +18,7 @@ class SongModelAdmin(admin.ModelAdmin):
 class SubscriptionModelAdmin(admin.ModelAdmin):
     pass
 
-
+@admin.register(models.Album)
+class AlbumModelAdmin(admin.ModelAdmin):
+    pass
 

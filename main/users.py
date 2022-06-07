@@ -33,11 +33,11 @@ from django.contrib.auth.views import auth_logout
 
 
 @transaction.atomic
-@decorators.api_view(['DELETE'])
+@csrf.csrf_exempt
 def delete_user(request):
     try:
         import jwt
-        user_id = jwt.decode(request.get_signed_cookie('jwt-token'),
+        user_id = jwt.decode(request.META.get('Authorization').split(' ')[1],
         key=getattr(settings, 'SECRET_KEY'), algorithms='HS256').get('user_id')
         assert user_id
 
@@ -46,7 +46,7 @@ def delete_user(request):
 
         auth_logout(request=request)
         models.CustomUser.objects.get(id=user_id).delete()
-        return django.http.HttpResponse(status=status.HTTP_200_OK)
+        return response
 
     except(db.IntegrityError, django.core.exceptions.ObjectDoesNotExist):
         return django.http.HttpResponseServerError()
@@ -60,38 +60,45 @@ def delete_user(request):
 
 class CreateUserAPIView(views.APIView):
 
-
-    # permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
+    permission_classes = (api_perms.IsNotAuthorizedOrReadOnly, permissions.AllowAny,)
     serializer_class = api_serializers.UserSerializer
     dropbox_storage = files_api.DropBoxBucket(
-    getattr(settings, 'DROPBOX_API_ENDPOINT'))
+    getattr(settings, 'DROPBOX_CUSTOMER_AVATAR_FILE_PATH'))
+
+    def get_authenticators(self):
+        return (authentication.UserAuthenticationClass,)
+
+    def handle_exception(self, exc):
+        return exc
 
     @transaction.atomic
     def post(self, request):
+        try:
+            serializer = self.serializer_class(data=request.data, many=False)
+            if serializer.is_valid(raise_exception=True):
 
-        serializer = self.serializer_class(data=request.data, many=False)
-        if serializer.is_valid(raise_exception=True):
+                user = models.CustomUser.objects.create_user(**serializer.validated_data)
 
-            user = models.CustomUser.objects.create_user(**serializer.validated_data)
+                if request.FILES.get('avatar_image'):
+                    file = request.FILES.get('avatar_image')
+                    file_link = self.dropbox_storage.upload(file=file, filename=file.name.split('.')[0])
+                    user.avatar_link = file_link
+                    user.save()
+                try:
+                    token = apply_jwt_token(user=user)
+                    login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
+                    response = django.http.HttpResponse(status=200)
+                    response.set_signed_cookie('jwt-token', token)
+                    return response
 
-            if request.FILES.get('avatar_image'):
-                file = request.FILES.get('avatar_image')
-                file_link = self.dropbox_storage.upload(file=file, filename=file.name.split('.')[0])
-                user.avatar_link = file_link
-                user.save()
+                except(db.IntegrityError, jwt.PyJWTError, NotImplementedError) as err:
+                    logger.error('creation user failed! Error has occurred: %s' % err.args)
+                    return django.http.HttpResponseServerError()
 
-            try:
-                token = apply_jwt_token(user=user)
-                login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
-                response = django.http.HttpResponse(status=200)
-                response.set_signed_cookie('jwt-token', token)
-                return response
-
-            except(db.IntegrityError, jwt.PyJWTError, NotImplementedError) as err:
-                logger.error('creation user failed! Error has occurred: %s' % err.args)
-                return django.http.HttpResponseServerError()
-
-        return django.http.HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+            return django.http.HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+        except(django.db.utils.IntegrityError, django.core.exceptions.BadRequest,) as exception:
+            transaction.rollback()
+            raise exception
 
 
 
@@ -138,7 +145,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 class CustomerProfileAPIView(views.APIView):
 
-    # authentication_classes = (authentication.UserAuthenticationClass,)
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (authentication.UserAuthenticationClass,)
 
     def check_permissions(self, request):
         return self.get_authenticators()[0].authenticate(request)
@@ -164,10 +172,8 @@ authenticate, login
 
 class LoginAPIView(views.APIView):
 
-    def check_permissions(self, request):
-        if 'jwt-token' in request.COOKIES.keys() or request.user.is_authenticated:
-            return django.core.exceptions.PermissionDenied()
-        return True
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (authentication.UserAuthenticationClass,)
 
     @csrf.csrf_exempt
     def post(self, request):
@@ -180,5 +186,4 @@ class LoginAPIView(views.APIView):
             login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
             return response
         return django.http.HttpResponse(status=400)
-
 

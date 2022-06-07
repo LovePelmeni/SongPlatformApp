@@ -7,12 +7,13 @@ import jwt, logging, requests
 
 logger = logging.getLogger(__name__)
 
+
 class SetUpAuthorizationHeaderMiddleware(deprecation.MiddlewareMixin):
 
     def process_request(self, request):
         try:
-            if not request.headers.get('Authorization'):
-                request.headers['Authorization'] = request.get_signed_cookie('jwt-token')
+            if not request.META.get('Authorization'):
+                request.META['Authorization'] = 'Bearer %s' % request.get_signed_cookie('jwt-token')
             return None
         except(KeyError,):
             return None

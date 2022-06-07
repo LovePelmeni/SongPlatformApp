@@ -16,8 +16,9 @@ class SubscriptionGenericView(generics.GenericAPIView):
     queryset = models.Subscription.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (auth.UserAuthenticationClass,)
+
     dropbox_storage = dropbox_storage.files_api.DropBoxBucket(
-    getattr(settings, 'DEFAULT_PREVIEW_PATH'))
+    getattr(settings, 'DROPBOX_SUBSCRIPTION_PREVIEW_FILE_PATH'))
 
     def handle_exception(self, exc):
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
@@ -29,17 +30,17 @@ class SubscriptionGenericView(generics.GenericAPIView):
         try:
             from . import dropbox
             serializer = serializers.SubscriptionSerializer(request.data, many=False)
-
-            if 'preview' in request.FILES.keys():
-                preview = request.FILES.get('preview')
-
-                file_link = self.dropbox_storage.upload(file=request.FILES.get('preview'),
-                filename=preview.name.split('.')[0])
-                serializer.validated_data.update({'preview': file_link})
-
             if serializer.is_valid(raise_exception=True):
-               models.Subscription.objects.create(
-               **serializer.validated_data)
+
+                if 'preview' in request.FILES.keys():
+                    preview = request.FILES.get('preview')
+
+                    file_link = self.dropbox_storage.upload(file=request.FILES.get('preview'),
+                    filename=preview.name.split('.')[0])
+                    serializer.validated_data.update({'preview': file_link})
+
+            models.Subscription.objects.create(
+            **serializer.validated_data)
 
             logger.debug('new subscription has been created.')
             return django.http.HttpResponse(status=status.HTTP_200_OK)
@@ -118,17 +119,16 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
     @csrf.requires_csrf_token
     def delete(self, request):
         try:
+            song = self.get_queryset().filter(id=request.query_params.get('song_id'))
             subscription = request.data.get('subscription')
-            chosen_songs = django.db.models.QuerySet(model=models.Song,
-            query=request.data.get('queryset'))
 
-            for song in chosen_songs:
-                song.subscriptions.append(subscription)
+            if not subscription in song.subscription.all():
+                raise django.core.exceptions.ObjectDoesNotExist()
 
-            updated = self.get_queryset().bulk_update(fields=['subscriptions'], objs=chosen_songs)
+            song.subscription.delete(id=subscription.id)
             return django.http.HttpResponse({'updated_songs': updated})
 
-        except(django.db.IntegrityError, django.db.ProgrammingError,) as exception:
+        except(django.db.IntegrityError, django.db.ProgrammingError,
+        django.core.exceptions.ObjectDoesNotExist,) as exception:
             transaction.rollback()
             raise exception
-

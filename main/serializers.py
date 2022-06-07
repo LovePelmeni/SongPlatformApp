@@ -99,11 +99,10 @@ class CatalogSongSerializer(serializers.Serializer):
         fields = ('song_name', 'song_description', 'has_subscription')
 
 
-class SongUpdateSerializer(serializers.ModelSerializer):
+class SongUpdateSerializer(SongCreateSerializer):
 
-    class Meta:
-        model = models.Song
-        fields = '__all__'
+    def __init__(self, **kwargs):
+        super(SongUpdateSerializer, self).__init__(**kwargs)
 
-
-
+    def validate(self, attrs):
+        return super().validate(attrs)
