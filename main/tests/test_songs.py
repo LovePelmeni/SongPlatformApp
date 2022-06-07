@@ -21,18 +21,17 @@ DROPBOX_TEST_APP_SECRET = '' # replace it with your test dropbox app secret
 class TestSongsCase(unittest.TestCase):
 
     def setUp(self):
-        self.client = client
+
         self.preview = bytes()
         self.audio_file = bytes()
         self.user = models.CustomUser.objects.create(username='TestUser',
         email='TestEmail', password='TestPassword')
         self.song = models.Song.objects.create(audio_file=self.audio_file, preview=self.preview, owner=self.user)
-        self.client = client
 
-    def test_song_create(self, dropbox_app):
+    def test_song_create(self, dropbox_app, client):
         import requests
-        self.client.force_login(self.user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
-        response = self.client.post('http://localhost:8000/song/',
+        client.force_login(self.user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
+        response = client.post('http://localhost:8000/song/',
         timeout=10, headers={'CSRF-Token'})
         self.assertIn(response.status_code, [200, 201])
 
@@ -50,3 +49,19 @@ class TestSongsCase(unittest.TestCase):
         self.assertLess(len(models.Song.objects.all()), 2)
 
 
+class TestTopWeekSongsCase(test.TestCase):
+
+    def setUp(self) -> None:
+        self.song_id = models.Song.objects.create(song_name='Some Song',
+        some_description='Some Description')
+
+    def test_get_top_week_song(self, client):
+        response = client.get('http://localhost:8000/get/week/song/',
+        params={'song_id': self.song_id}, timeout=10)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('song', json.loads(response.read().decode('utf-8')).keys())
+
+    def test_get_top_week_songs(self, client):
+        response = client.get('http://localhost:8000/get/week/songs/')
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('', json.loads(response.read().decode('utf-8')).keys())

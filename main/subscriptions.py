@@ -97,18 +97,17 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
         if isinstance(exc, django.db.IntegrityError) or isinstance(exc, django.db.ProgrammingError):
             return django.http.HttpResponseServerError()
 
+        return django.http.HttpResponseServerError()
+
     @transaction.atomic
     @csrf.requires_csrf_token
     def post(self, request):
         try:
-            subscription = request.data.get('subscription_id')
+            subscription = models.Subscription.objects.get(id=request.data.get('subscription_id'))
             chosen_songs = django.db.models.QuerySet(model=models.Song,
             query=request.data.get('queryset'))
 
-            for song in chosen_songs:
-                song.subscriptions.append(subscription)
-
-            updated = self.get_queryset().bulk_update(fields=['subscriptions'], objs=chosen_songs)
+            subscription.songs.bulk_create(chosen_songs)
             return django.http.HttpResponse({'updated_songs': updated})
 
         except(django.db.IntegrityError, django.db.ProgrammingError, django.db.OperationalError,) as exception:
@@ -121,14 +120,15 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
         try:
             song = self.get_queryset().filter(id=request.query_params.get('song_id'))
             subscription = request.data.get('subscription')
-
-            if not subscription in song.subscription.all():
-                raise django.core.exceptions.ObjectDoesNotExist()
-
-            song.subscription.delete(id=subscription.id)
+            subscription.songs.delete(id=song.id)
             return django.http.HttpResponse({'updated_songs': updated})
 
         except(django.db.IntegrityError, django.db.ProgrammingError,
         django.core.exceptions.ObjectDoesNotExist,) as exception:
             transaction.rollback()
             raise exception
+
+
+
+
+

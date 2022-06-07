@@ -16,11 +16,6 @@ from django.core import validators, exceptions
 from django.db import transaction
 
 EVENTS = ["customer_create", "customer_delete", "customer_update", "sub_create", "sub_delete", "sub_update"]
-SIGNALS = {}
-
-# for event in EVENTS: # registering success event signals...
-#     SIGNALS[event] = django.dispatch.dispatcher.Signal()
-
 
 import json
 class DistributedController(object):
@@ -96,9 +91,7 @@ class DistributedController(object):
             raise NotImplementedError
 
 
-
 distributed_controller = DistributedController
-
 
 
 class SongQueryset(django.db.models.QuerySet):

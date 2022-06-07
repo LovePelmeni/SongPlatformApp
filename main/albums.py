@@ -36,10 +36,12 @@ class AlbumViewSet(viewsets.ModelViewSet):
         cls=django.core.serializers.json.DjangoJSONEncoder))
 
 
+from rest_framework import authentication
+
 class AlbumAPIView(views.APIView):
 
-    serializer_class = serializers.AlbumSerializer
-    permission_classes = (permissions.IsAlbumOwner,)
+    permission_classes = (permissions.IsAlbumOwner, rest_perms.IsAuthenticated,)
+    authentication_classes = (authentication.UserAuthenticationClass,)
 
     def handle_exception(self, exc):
         if isinstance(exc, django.core.exceptions.ObjectDoesNotExist):
@@ -50,10 +52,10 @@ class AlbumAPIView(views.APIView):
     @csrf.requires_csrf_token
     def post(self, request):
         try:
-            album = self.serializer_class(request.data, many=False)
+            album = serializers.SongCreateSerializer(data=request.data, many=False)
             if album.is_valid(raise_exception=True):
                 if 'queryset' in album.validated_data.items():
-                    album.songs.update(**album.validated_data.get('queryset'))
+                    album.songs.bulk_create(album.validated_data.get('queryset'))
 
             logger.debug('data has been obtained..')
             return django.http.HttpResponse(status=200)
@@ -66,14 +68,12 @@ class AlbumAPIView(views.APIView):
     def put(self, request):
         try:
             album = models.Album.objects.get(id=request.query_params.get('album_id'))
-            updated_data = self.serializer_class(request.data, many=False).validated_data
+            updated_data = serializers.SongUpdateSerializer(data=request.data,
+            many=False).validated_data
             album.update(**updated_data)
             return django.http.HttpResponse(status=200)
 
         except(django.core.exceptions.ObjectDoesNotExist,):
             transaction.rollback()
             raise django.core.exceptions.ObjectDoesNotExist()
-
-
-
 

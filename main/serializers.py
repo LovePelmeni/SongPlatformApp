@@ -59,17 +59,19 @@ class SongsSerializer(serializers.ModelSerializer):
         model = models.Song
         exclude = ('song_name', 'amount', 'owners')
 
-class SongSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = models.Song
-        fields = '__all__'
 
 class SongCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Song
         fields = "__all__"
+
+class SongUpdateSerializer(serializers.ModelSerializer):
+
+    def __init__(self, **kwargs):
+        super(SongUpdateSerializer, self).__init__(**kwargs)
+        del self.fields['songs']
 
 
 class AlbumSerializer(serializers.ModelSerializer):
