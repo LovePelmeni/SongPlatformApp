@@ -9,6 +9,9 @@ from . import authentication as api_auth, serializers
 from . import models, authentication as auth, dropbox as dropbox_storage
 import django.db.models
 from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SubscriptionGenericView(generics.GenericAPIView):
@@ -104,10 +107,11 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
     def post(self, request):
         try:
             subscription = models.Subscription.objects.get(id=request.data.get('subscription_id'))
-            chosen_songs = django.db.models.QuerySet(model=models.Song,
-            query=request.data.get('queryset'))
+            chosen_songs = request.data.get('queryset')
 
-            subscription.songs.bulk_create(chosen_songs)
+            subscription.songs.bulk_create(
+            [Song(**song) for song in chosen_songs]
+            )
             return django.http.HttpResponse({'updated_songs': updated})
 
         except(django.db.IntegrityError, django.db.ProgrammingError, django.db.OperationalError,) as exception:
@@ -127,8 +131,4 @@ class SubscriptionSongGenericView(generics.GenericAPIView):
         django.core.exceptions.ObjectDoesNotExist,) as exception:
             transaction.rollback()
             raise exception
-
-
-
-
 

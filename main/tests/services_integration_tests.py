@@ -1,5 +1,5 @@
-
 import unittest
+from django.conf import settings
 
 
 class RabbitmqIntegrationTestCase(unittest.TestCase):

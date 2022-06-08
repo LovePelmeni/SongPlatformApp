@@ -69,7 +69,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'main.middlewares.SetUpAuthorizationHeaderMiddleware',
-    'main.middlewares.CheckBlockedMiddleware',
+    'main.middlewares.CheckBlockedUserMiddleware'
+
 ]
 
 ROOT_URLCONF = 'VideoHost.urls'

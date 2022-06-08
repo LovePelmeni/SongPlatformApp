@@ -15,7 +15,18 @@ from django import db
 from django.core import validators, exceptions
 from django.db import transaction
 
-EVENTS = ["customer_create", "customer_delete", "customer_update", "sub_create", "sub_delete", "sub_update"]
+CustomerCreated = django.dispatch.dispatcher.Signal()
+
+CustomerUpdated= django.dispatch.dispatcher.Signal()
+
+CustomerDeleted = django.dispatch.dispatcher.Signal()
+
+SubscriptionCreated = django.dispatch.dispatcher.Signal()
+
+SubscriptionUpdated = django.dispatch.dispatcher.Signal()
+
+SubscriptionDeleted = django.dispatch.dispatcher.Signal()
+
 
 import json
 class DistributedController(object):
@@ -185,14 +196,6 @@ class SubscriptionQueryset(models.QuerySet):
         except(NotImplementedError,):
             raise NotImplementedError
 
-    @transaction.atomic
-    def update(self, **kwargs):
-        pass
-
-    @transaction.atomic
-    def delete(self):
-        pass
-
 
 class SubscriptionManager(db.models.manager.BaseManager.from_queryset(queryset_class=SubscriptionQueryset)):
     pass
@@ -323,8 +326,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def delete(self, using=None, **kwargs):
         try:
-           self.distributed_delete()
-           return super().delete(using=using, **kwargs)
+            from . import dropbox
+            self.distributed_delete()
+            dropbox.files_api.DropBoxBucket(
+            path=getattr(settings, 'DROPBOX_CUSTOMER_AVATAR_FILE_PATH')).remove(
+            file_link=self.avatar_image)
+            return super().delete(using=using, **kwargs)
+
         except() as exception:
             raise exception
 
@@ -372,3 +380,6 @@ class BlockList(models.Model):
 
     def add_to_list(self, user):
         pass
+
+
+

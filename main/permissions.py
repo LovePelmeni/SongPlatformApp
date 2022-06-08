@@ -60,3 +60,5 @@ class IsAlbumOwner(permissions.BasePermission):
             raise django.core.exceptions.PermissionDenied()
 
 
+
+

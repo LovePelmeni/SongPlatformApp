@@ -78,7 +78,6 @@ class SongCatalogViewSet(viewsets.ModelViewSet):
         except(django.core.exceptions.ObjectDoesNotExist, AttributeError) as exception:
             raise exception
 
-
 import typing
 from django.db import models as db_models
 
@@ -128,8 +127,10 @@ class TopWeekSongsViewSet(viewsets.ModelViewSet):
 
 class SongGenericView(generics.GenericAPIView):
 
+
     queryset = models.Song.objects.all()
     permissions = (api_permissions.HasSongPermission, permissions.IsAuthenticated,)
+
     authentication_classes = (authentication.UserAuthenticationClass,)
     song_bucket = dropbox_storage.files_api.DropBoxBucket(
     path=getattr(settings, 'DROPBOX_SONG_AUDIO_FILE_PATH'))
@@ -150,7 +151,9 @@ class SongGenericView(generics.GenericAPIView):
     @csrf.csrf_exempt
     def post(self, request):
         status_code = 400
-        if serializers.SongCreateSerializer(data=request.data, many=False).is_valid(raise_exception=True):
+        if serializers.SongCreateSerializer(
+        data=request.data, many=False).is_valid(raise_exception=True):
+
             models.Song.objects.create(**request.data)
             status_code = 200
         return django.http.HttpResponse(status=status_code)
@@ -194,6 +197,8 @@ class SongGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
+
+
 
 
 

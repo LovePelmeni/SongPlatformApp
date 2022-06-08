@@ -60,18 +60,11 @@ class SongsSerializer(serializers.ModelSerializer):
         exclude = ('song_name', 'amount', 'owners')
 
 
-
 class SongCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Song
         fields = "__all__"
-
-class SongUpdateSerializer(serializers.ModelSerializer):
-
-    def __init__(self, **kwargs):
-        super(SongUpdateSerializer, self).__init__(**kwargs)
-        del self.fields['songs']
 
 
 class AlbumSerializer(serializers.ModelSerializer):
@@ -89,6 +82,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Subscription
         fields = '__all__'
+
+
+class SubscriptionUpdateSerializer(SubscriptionSerializer):
+
+    def __init__(self, **kwargs):
+        super(SubscriptionUpdateSerializer, self).__init__(**kwargs)
+        for field in self.get_fields():
+            field.__setattr__('required', False)
+
 
 class CatalogSongSerializer(serializers.Serializer):
 

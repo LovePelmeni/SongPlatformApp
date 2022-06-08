@@ -33,8 +33,8 @@ class UserAuthenticationClass(authentication.BaseAuthentication):
                 raise rest_framework.exceptions.AuthenticationFailed()
 
             payload = jwt.decode(auth[1], algorithms='HS256', key=settings.SECRET_KEY)
-            logger.debug('user jwt has been passed...')
             if models.CustomUser.objects.filter(id=payload['user_id']).first():
+                logger.debug('user jwt has been passed...')
                 return None
             raise rest_framework.exceptions.AuthenticationFailed()
 

@@ -13,8 +13,6 @@ def update_customer(updated_data, customer):
 def delete_customer(customer_id):
     pass
 
-
-
 @django.dispatch.dispatcher.receiver(signal=models.SubscriptionCreated)
 def create_subscription(subscription_data):
     pass
@@ -26,5 +24,6 @@ def update_subscription(updated_data, subscription):
 @django.dispatch.dispatcher.receiver(signal=models.SubscriptionDeleted)
 def delete_subscription(subscription_id):
     pass
+
 
 

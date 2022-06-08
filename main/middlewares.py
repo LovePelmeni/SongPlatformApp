@@ -19,16 +19,12 @@ class SetUpAuthorizationHeaderMiddleware(deprecation.MiddlewareMixin):
             return None
 
 
-class CheckBlockedUserMiddleware(object):
+class CheckBlockedUserMiddleware(deprecation.MiddlewareMixin):
 
     def get_blocked_list(self):
         return models.BlockList.outcasts.all()
 
-    def __init__(self, get_response):
-        self.get_response = get_response
-        super(CheckBlockedUserMiddleware, self).__init__(get_response)
-
-    def __call__(self, request):
+    def process_request(self, request):
 
         response = self.get_response(request)
         if not request.META.get('HTTP_REFERER'):
@@ -38,6 +34,21 @@ class CheckBlockedUserMiddleware(object):
             return django.http.HttpResponseForbidden()
 
         return response
+
+
+
+class CsrfTokenCheckerMiddleware(deprecation.MiddlewareMixin):
+
+    def process_request(self, request):
+        try:
+            if not 'CSRF-Token' in request.META.keys() and 'CSRF-Token' in request.COOKIES:
+                request.META['CSRF-Token'] = request.COOKIES.get('CSRF-Token')
+                return None
+        except(KeyError,):
+            return None
+
+
+
 
 
 
