@@ -197,8 +197,3 @@ class SongGenericView(generics.GenericAPIView):
         except() as exception:
             transaction.rollback()
             raise exception
-
-
-
-
-

@@ -20,7 +20,7 @@ songs_urlpatterns = [
 ]
 subscription_urlpatterns = [
 
-    path('/subscription/', subscriptions.SubscriptionGenericView.as_view(), name='subscription'),
+    path('subscription/', subscriptions.SubscriptionGenericView.as_view(), name='subscription'),
     path('/subscription/song/', subscriptions.SubscriptionSongGenericView.as_view(), name='subscription-song')
 
 ]

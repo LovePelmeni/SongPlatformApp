@@ -16,9 +16,14 @@ class SongModelAdmin(admin.ModelAdmin):
 
 @admin.register(models.Subscription)
 class SubscriptionModelAdmin(admin.ModelAdmin):
-    pass
+
+    list_display = ('subscription_name',)
+    fields = ('subscription_name',)
 
 @admin.register(models.Album)
 class AlbumModelAdmin(admin.ModelAdmin):
-    pass
+
+    list_display = ('album_name',)
+    fields = ('album_name',)
+
 

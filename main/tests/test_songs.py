@@ -13,7 +13,7 @@ from parameterized import parameterized
 @pytest.fixture(scope='module')
 def dropbox_app():
     yield dropbox.Dropbox(
-    app_secret=getattr(settings, 'DROPBOX_APP_SECRET')).files_
+    app_secret=getattr(settings, 'DROPBOX_APP_SECRET'))
 
 @pytest.fixture(scope='module')
 def client():
@@ -38,7 +38,7 @@ class TestSongsCase(test.TransactionTestCase):
         pytest.paraself.test_song_update()
 
     @staticmethod
-    def dropbox_TearDown(dropbox_app) -> bool:
+    def dropbox_TearDown(dropbox_app: dropbox.Dropbox) -> bool:
         import requests, dropbox.exceptions
         response = requests.get('http://api.dropboxapi.com/2/files/list_folder/',
         headers={'Authorization': "Basic %s %s" % (DROPBOX_TEST_APP_KEY, DROPBOX_TEST_APP_SECRET)})
@@ -47,7 +47,7 @@ class TestSongsCase(test.TransactionTestCase):
             if not len(json.loads(response.text).get('files')):
                 return True
             for file in json.loads(response.text)['files']:
-                dropbox_app.files_delete(path=file['path'])
+                dropbox_app.files_delete_v2(path=file['path'])
             return True
         except(dropbox.exceptions.DropboxException):
             raise NotImplementedError
@@ -71,6 +71,7 @@ class TestSongsCase(test.TransactionTestCase):
         self.assertIn(response.status_code, [200, 201])
         self.assertGreater(len(models.Song.objects.all()), 1)
 
+
     @paramitrized.expand([{'username': 'some-username', 'password': 'some-password',
     'phone_number': 'some-phone_number'}, 1, client])
     def test_song_update(self, song_data, song_id,  client):
@@ -78,6 +79,7 @@ class TestSongsCase(test.TransactionTestCase):
         response = client.put('http://localhost:8000/song/?song_id=%s' % song_id,
         timeout=10, data=song_data, headers={'Content-Type': 'application/json'})
         self.assertEquals(response.status_code, (200, 201))
+
 
     @paramitrized.expand([1, client])
     def test_song_delete(self, song_id, client):
@@ -104,3 +106,6 @@ class TestTopWeekSongsCase(test.TransactionTestCase):
         response = client.get('http://localhost:8000/get/week/songs/')
         self.assertEquals(response.status_code, 200)
         self.assertIn('', json.loads(response.read().decode('utf-8')).keys())
+
+
+

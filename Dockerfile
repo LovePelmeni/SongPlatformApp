@@ -1,7 +1,9 @@
-FROM python:3.18.13-buster
+FROM python:3.8.13-buster
 
 RUN pip install --upgrade pip
-COPY .project/requirements.txt ./requirements.txt
+RUN pip install psycopg2-binary --no-cache-dir --no-input
+
+COPY ./project/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 COPY . .
 

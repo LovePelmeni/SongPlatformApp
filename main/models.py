@@ -174,6 +174,7 @@ class Album(models.Model):
 
     album_name = models.CharField(verbose_name='Album Name', max_length=100, null=False)
     songs = models.ForeignKey(verbose_name='Songs', null=True, to=Song, on_delete=models.PROTECT)
+    private = models.BooleanField(verbose_name='Private', default=False)
     created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -364,7 +365,17 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         # return result
         pass
 
-class BlockList(models.Model):
+class BlockListSingleton(object):
+
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls._instance, cls):
+            cls._instance = super().__new__(*args, **kwargs)
+        return cls._instance
+
+
+class BlockList(BlockListSingleton, models.Model):
 
     def clean(self):
         model = self.__class__
@@ -376,10 +387,9 @@ class BlockList(models.Model):
     outcasts = models.ForeignKey(to=CustomUser, on_delete=models.PROTECT)
 
     def remove_from_list(self, user):
-        pass
+        self.outcasts.create(user)
 
     def add_to_list(self, user):
-        pass
-
+        self.outcasts.delete(id=user.id)
 
 

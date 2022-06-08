@@ -2,7 +2,7 @@ import abc
 import typing
 
 import django.utils.decorators
-from rest_framework import views, viewsets, permissions as rest_perms
+from rest_framework import views, viewsets, permissions as rest_perms, status
 
 from . import permissions, serializers, models
 import json
@@ -21,8 +21,6 @@ from rest_framework import decorators
 class AlbumViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.AlbumSerializer
-    permission_classes = (permissions.IsAlbumOwner, api_perms.IsAuthenticated,)
-    authentication_classes = (authentication.UserAuthenticationClass,)
     queryset = models.Album.objects.all()
 
 
@@ -35,11 +33,10 @@ class AlbumViewSet(viewsets.ModelViewSet):
         return django.http.HttpResponse(json.dumps({'queryset': queryset},
         cls=django.core.serializers.json.DjangoJSONEncoder), status=status.HTTP_200_OK)
 
-
     @django.utils.decorators.method_decorator(vary.vary_on_headers('Authorization'))
     @decorators.action(methods=['get'], detail=False)
     def list(self, request, **kwargs):
-        queryset = self.get_queryset().filter(owner=request.user)
+        queryset = list(self.get_queryset().filter(private=False, owner=request.user).values())
         return django.http.HttpResponse(json.dumps({'queryset': queryset},
         cls=django.core.serializers.json.DjangoJSONEncoder))
 

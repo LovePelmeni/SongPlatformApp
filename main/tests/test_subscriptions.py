@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest, pytest
 from django import test
 from parameterized import parameterized
@@ -9,26 +11,14 @@ except(ImportError,):
 @pytest.fixture(scope='module')
 def client():
     yield test.Client(enforce_csrf_checks=True)
+from .tests import BaseRequestEndpointTestCase
 
-
-class TestSubscriptionCase(test.TestCase):
+class TestSubscriptionCase(BaseRequestEndpointTestCase):
 
     def setUp(self):
         self.data = {'username': 'some-username',
         'password': 'some-password', 'phone_number': 'some-phone_number'}
 
-    @paramitrized.expand([{'username': 'some-username', 'password': 'some-password',
-    'phone_number': 'some-phone_number'}, client])
-    def test_create_subscription(self, subscription_data, client):
-        pass
-
-    @paramitrized.expand([1, client])
-    def test_delete_subscription(self, subscription_id, client):
-        pass
-
-    @paramitrized.expand([{'username': 'some-username', 'password': 'some-password',
-    'phone_number': 'some-phone_number'}, 1, client])
-    def test_update_subscription(self, subscription_data, subscription_id, client):
-        pass
-
-
+    def run(self, result: unittest.result.TestResult | None = ...) -> unittest.result.TestResult | None:
+        self.run_tests()
+        return super().run(result)

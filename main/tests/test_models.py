@@ -22,7 +22,8 @@ class AutomatedModelTestCase(TestCase):
 
     def setUp(self) -> None:
         from django.apps import apps
-        self.models = [model.__class__.__name__ for model in apps.get_models(include_auto_created=True)]
+        self.models = [model.__class__.__name__ for model
+        in apps.get_models(include_auto_created=True)]
 
     def test_model_creation(self, testdir):
         for model in self.models:

@@ -108,7 +108,6 @@ class CreateUserAPIView(views.APIView):
             raise exception
 
 
-
 class EditUserAPIView(views.APIView):
 
     permission_classes = (permissions.IsAuthenticated,)
@@ -194,6 +193,7 @@ class LoginAPIView(views.APIView):
             login(request, user, backend=getattr(settings, 'AUTHENTICATION_BACKENDS')[0])
             return response
         return django.http.HttpResponse(status=400)
+
 
 
 

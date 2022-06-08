@@ -25,6 +25,12 @@ class DropBoxFileLink(pydantic.BaseModel):
 
     file_link: str # full path not restricted.
 
+from abc import ABC
+class DropBoxFile(object):
+
+    def __init__(self, file):
+        self.file = file
+        self.name = ''
 
 class DropBoxBucket(object):
     """
@@ -33,7 +39,6 @@ class DropBoxBucket(object):
     """
     def __init__(self, path):
         self.path = path
-
 
     def get_bucket_default_path(self) -> str:
         try:
@@ -50,15 +55,14 @@ class DropBoxBucket(object):
         except(dropbox.files.DownloadError,):
             raise exceptions.DropboxBucketDoesNotExist()
 
-
-    def upload(self, file, filename: typing.Optional[str]) -> DropBoxFileLink:
+    def upload(self, file: DropBoxFile, filename: typing.Optional[str]) -> DropBoxFileLink:
         try:
             path = self.get_bucket_default_path()
-            extension = os.path.splitext(file)[1]
+            extension = os.path.splitext(file.name)[1]
             if not filename:
                 filename = os.path.splitext(file)[0]
             path += '/%s.%s' % (filename, extension)
-            with open(file, mode='rb') as upload_file:
+            with open(file.file, mode='rb') as upload_file:
                 dropbox_app.files_upload(f=upload_file.read(), path=path)
             return DropBoxFileLink(file_link=path)
 
