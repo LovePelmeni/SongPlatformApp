@@ -1,0 +1,64 @@
+{
+  "vhosts": [
+    {
+      "name": "rabbitmq_vhost"
+    }
+  ],
+  "parameters": [],
+  "exchanges": [
+    {
+      "name": "exchange",
+      "vhost": "rabbitmq_vhost",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "policies": [],
+
+  "queues": [
+    {
+      "name": "customer_create",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "customer_update",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+        {
+      "name": "user_delete",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+        {
+      "name": "subscription_create",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "subscription_update",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "subscription_delete",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ]
+}

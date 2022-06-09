@@ -17,7 +17,7 @@ from django.db import transaction
 
 CustomerCreated = django.dispatch.dispatcher.Signal()
 
-CustomerUpdated = django.dispatch.dispatcher.Signal()
+CustomerUpdated= django.dispatch.dispatcher.Signal()
 
 CustomerDeleted = django.dispatch.dispatcher.Signal()
 
@@ -58,30 +58,11 @@ class DistributedController(object):
         / * Handles incoming response messages from rabbitmq.
         """
         try:
-            signal_name = None
-
-            if queue.method.queue == 'customer_create':
-                signal_name = CustomerCreated
-
-            if queue.method.queue == 'customer_update':
-                signal_name = CustomerUpdated
-
-            if queue.method.queue == 'customer_delete':
-                signal_name = CustomerDeleted
-
-            if queue.method.queue == 'subscription_create':
-                signal_name = SubscriptionCreated
-
-            if queue.method.queue == 'subscription_update':
-                signal_name = SubscriptionUpdated
-
-            if queue.method.queue == 'subscription_delete':
-                signal_name = SubscriptionDeleted
-
-
+            signal_name = str(queue.method.queue)
             if json.loads(body).decode('utf-8').get('status_code') in ('200', '201'):
-                signal_name.send(**json.loads(body).decode('utf-8'))
+                signals[signal_name].send(transaction_data=body)
                 logger.debug('new transaction for %s has been passed successfully.' % queue.method.queue)
+
 
         except(pika.exceptions.ConnectionClosed, pika.exceptions.ConnectionError,) as exception:
             logger.error('RABBITMQ CONNECTION LOST, SEEMS LIKE AN ERROR: %s' % exception)
@@ -337,8 +318,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def apply_new_avatar(self, avatar):
 
         from . import dropbox
+        filename = avatar.name.split('.')[0]
         dropbox.files_api.DropBoxBucket(path=getattr(settings,
-        'DROPBOX_CUSTOMER_AVATAR_FILE_PATH')).upload(file=avatar)
+        'DROPBOX_CUSTOMER_AVATAR_FILE_PATH')).upload(filename=filename, file=avatar)
         self.avatar_image = avatar_url
         self.save(using=self._db)
 
@@ -409,6 +391,5 @@ class BlockList(BlockListSingleton, models.Model):
 
     def add_to_list(self, user):
         self.outcasts.delete(id=user.id)
-
 
 
