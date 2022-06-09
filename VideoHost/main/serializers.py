@@ -53,9 +53,62 @@ class UserLoginSerializer(UserSerializer):
         del self.fields['avatar_image']
 
 
-class SongSerializer(serializers.ModelSerializer):
-    pass
+class SongsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Song
+        exclude = ('song_name', 'amount', 'owners')
 
 
 class SongCreateSerializer(serializers.ModelSerializer):
-    pass
+
+    class Meta:
+        model = models.Song
+        fields = "__all__"
+
+
+class AlbumSerializer(serializers.ModelSerializer):
+
+    album_name = serializers.CharField(label='Album Name', required=True, max_length=100)
+    description = serializers.CharField(label='Description', required=False, max_length=100)
+
+    class Meta:
+        model = models.Song
+        fields = '__all__'
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Subscription
+        fields = '__all__'
+
+
+class SubscriptionUpdateSerializer(SubscriptionSerializer):
+
+    def __init__(self, **kwargs):
+        super(SubscriptionUpdateSerializer, self).__init__(**kwargs)
+        for field in self.get_fields():
+            field.__setattr__('required', False)
+
+
+class CatalogSongSerializer(serializers.Serializer):
+
+    song_name = serializers.CharField(label='Song Name', required=False, max_length=100)
+    song_description = serializers.CharField(label='Song Description', required=False, max_length=200)
+    has_subscription = serializers.CharField(label='Has Subscription', required=False, default=False)
+
+    class Meta:
+        model = models.Song
+        fields = ('song_name', 'song_description', 'has_subscription')
+
+
+class SongUpdateSerializer(SongCreateSerializer):
+
+    def __init__(self, **kwargs):
+        super(SongUpdateSerializer, self).__init__(**kwargs)
+        for field in self.get_fields():
+            self.fields[field].__setattr__('required', False)
+
+
+

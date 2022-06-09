@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-cl71#vtl!s58j$65*6u%o#krsltkl^k8*2ycq73478c5yqid!b
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -44,22 +44,17 @@ INSTALLED_APPS = [
 
     'main',
     'rest_framework',
-
-    'storages',
     'corsheaders',
     'drf_yasg',
 ]
+
 
 AUTHENTICATION_BACKENDS = (
 
     'main.backends.AdminAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
-    'xmpp_backends.django.auth_backends.XmppBackendBackend'
 )
 
-CACHE = {
-
-}
 
 MIDDLEWARE = [
 
@@ -73,8 +68,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    # 'main.middlewares.CheckAuthUserMiddleware',
+    'main.middlewares.SetUpAuthorizationHeaderMiddleware',
+    'main.middlewares.CheckBlockedUserMiddleware'
 
 ]
 
@@ -98,18 +93,15 @@ TEMPLATES = [
 
 AUTH_USER_MODEL = 'main.CustomUser'
 WSGI_APPLICATION = 'VideoHost.wsgi.application'
-# ASGI_APPLICATION = 'main.routing.application'
 
 REST_FRAMEWORK = {
 
-    # 'DEFAULT_AUTHENTICATION_CLASSES': (
-    #     'main.authentication.UserAuthenticationClass',
-    # ),
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser'
     ),
+
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
@@ -119,12 +111,32 @@ REST_FRAMEWORK = {
     )
 }
 
-REDIS_CACHE_STORAGE = redis.Redis(host='localhost',
-password='REDIS_PASSWORD', port=6380)
-
-
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG'
+        },
+        'file_handler': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'file_log.log'
+        }
+    },
+    'loggers': {
+        'main': {
+            'handlers': ['console', 'file_handler'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
 if not DEBUG:
 
     import os
@@ -138,24 +150,43 @@ if not DEBUG:
             'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
             'HOST': os.environ.get('POSTGRES_HOST'),
             'PORT': os.environ.get('POSTGRES_PORT')
-        }
+        },
     }
+
+    SONG_APP_DOMAIN = os.environ.get('SONG_APP_DOMAIN')
+    FRONTEND_APPLICATION_DOMAIN = os.environ.get('VUE_APP_DOMAIN')
+    SUBSCRIPTION_APP_DOMAIN = os.environ.get('SUBSCRIPTION_APP_DOMAIN')
 
     CORS_ALLOWED_ORIGINS = [
 
-        'http://localhost:8000',
-        'http://localhost:8033',
-        'http://localhost:3000'
+        'http://%s:8000' % SONG_APP_DOMAIN,
+        'http://%s:3000' % FRONTEND_APPLICATION_DOMAIN,
+        'http://%s:8033' % SUBSCRIPTION_APP_DOMAIN
 
     ]
 
-    CHANNEL_LAYER = {
+    CACHE = {
         'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                "hosts": [('redis', 6379)],
-            },
-        }}
+            'BACKEND': 'django.core.cache.backends.RedisCache',
+            'LOCATION': 'http://%s:6379' % os.environ.get('REDIS_HOST'),
+            'OPTIONS': {
+                'PASSWORD': os.environ.get('REDIS_PASSWORD')
+            }
+        }
+    }
+
+    DROPBOX_SONG_PREVIEW_FILE_PATH = os.environ.get('DROPBOX_SONG_PREVIEW_FILE_PATH')
+    DROPBOX_SONG_AUDIO_FILE_PATH = os.environ.get('DROPBOX_SONG_AUDIO_FILE_PATH')
+    DROPBOX_SUBSCRIPTION_PREVIEW_FILE_PATH = os.environ.get('DROPBOX_SUBSCRIPTION_PREVIEW_FILE_PATH')
+    DROPBOX_CUSTOMER_AVATAR_FILE_PATH = os.environ.get('DROPBOX_CUSTOMER_AVATAR_FILE_PATH')
+
+    RABBITMQ_HOST = os.getenv('RABBITMQ_HOST')
+    RABBITMQ_USER = os.getenv('RABBITMQ_USER')
+    RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD')
+    RABBITMQ_PORT = os.getenv('RABBITMQ_PORT')
+    RABBITMQ_VHOST = os.getenv('RABBITMQ_VHOST')
+
+    DROPBOX_ACCESS_TOKEN = os.environ.get('DROPBOX_ACCESS_TOKEN')
 
 else:
 
@@ -169,8 +200,7 @@ else:
             'PASSWORD': 'Kirill',
             'HOST': 'localhost',
             'PORT': 5434
-        }
-
+        },
     }
 
     CORS_ALLOW_ALL_ORIGINS = True
@@ -183,18 +213,28 @@ else:
             },
         }}
 
+    CACHE = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+
+    import os
+    DROPBOX_SONG_PREVIEW_FILE_PATH = '/song/preview/'
+    DROPBOX_SONG_AUDIO_FILE_PATH = '/song/audio/'
+    DROPBOX_SUBSCRIPTION_PREVIEW_FILE_PATH = '/subscription/preview/'
+    DROPBOX_CUSTOMER_AVATAR_FILE_PATH = '/customer/avatar/'
+
+    RABBITMQ_HOST = 'localhost'
+    RABBITMQ_USER = 'rabbitmq_user'
+    RABBITMQ_PASSWORD = 'rabbitmq_password'
+    RABBITMQ_PORT = '5671'
+    RABBITMQ_VHOST = 'rabbitmq_vhost'
+
+    DROPBOX_ACCESS_TOKEN = 'sl.BJLitAO_iWxsZEgUxIeUrWshvSSn5sX2Zur9qk7u9N_k0d-9kJ5tLrAIEKWNNsjay3u4z4sIgvspeuIa_eNFP4SQ1sXF7Jpxad3ibll70lpU9Qbon_HG11Vk8rgSpRAS1rh-OSI'
+
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Europe/London'
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -213,28 +253,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-# AWS_IMAGES_BUCKET_NAME = ''
-# AWS_VIDEOS_BUCKET_NAME = ''
-# AWS_ACCESS_KEY_ID = ''
-#
-# AWS_SECRET_ACCESS_KEY = ''
-# AWS_STORAGE_BUCKET_NAME = ''
-# AWS_S3_CUSTOM_DOMAIN = ''
-#
-# AWS_S3_OBJECT_PARAMETERS = {
-#     'CacheControl': 'max-age=86400',
-# }
-#
-# AWS_STATIC_LOCATION = 'static'
-# STATICFILES_STORAGE = 'main.aws_s3.storage_backends.StaticStorage'
-# AWS_STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
-#
-# AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
-# DEFAULT_FILE_STORAGE = 'main.aws_s3.storage_backends.PublicMediaStorage'
-#
-# AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
-# PRIVATE_FILE_STORAGE = 'main.aws_s3.storage_backends.PrivateMediaStorage'
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -264,7 +282,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'main/static/images/')
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-
 

@@ -19,14 +19,42 @@
 
   "queues": [
     {
-      "name": "user_deleted",
+      "name": "customer_create",
       "vhost": "rabbitmq_vhost",
       "durable": true,
       "auto_delete": false,
       "arguments": {}
     },
     {
-      "name": "user_created",
+      "name": "customer_update",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+        {
+      "name": "user_delete",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+        {
+      "name": "subscription_create",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "subscription_update",
+      "vhost": "rabbitmq_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "subscription_delete",
       "vhost": "rabbitmq_vhost",
       "durable": true,
       "auto_delete": false,

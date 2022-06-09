@@ -4,6 +4,11 @@ from . import models
 
 class AdminAuthBackend(backends.RemoteUserBackend):
 
+    def has_perm(self, user_obj, perm, obj=None):
+        if not user_obj.is_staff or user_obj.is_blocked:
+            return django.core.exceptions.PermissionDenied()
+        return True
+
     def authenticate(self, request, username=None, password=None, **kwargs):
         try:
             user = models.CustomUser.objects.filter(username__iexact=username).first()
@@ -19,6 +24,7 @@ class AdminAuthBackend(backends.RemoteUserBackend):
             return django.core.exceptions.PermissionDenied()
         return True
 
+
 class UserAuthBackend(backends.RemoteUserBackend):
 
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -32,8 +38,7 @@ class UserAuthBackend(backends.RemoteUserBackend):
             return None
 
     def get_all_permissions(self, user_obj, obj=None):
-        if user.is_anonymous:
+        if user_obj.is_anonymous:
             return django.core.exceptions.PermissionDenied()
         return True
-
 

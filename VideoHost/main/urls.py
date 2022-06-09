@@ -1,21 +1,34 @@
-from . import views
 from django.urls import path
 from . import users
 from rest_framework import permissions
-from . import songs, song_permissions
+from . import songs, subscriptions, albums
+import django.http
 
 app_name = 'main'
 
 urlpatterns = []
 
-
 songs_urlpatterns = [
 
-    path('song/', songs.SongOwnerGenericView.as_view(), name='song'),
-    path('catalog/all/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
-    path('get/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
-    path('/song/permission/', song_permissions.SongPermissions.as_view(), name='song-permission'),
+    path('top/week/song/', songs.TopWeekSongsViewSet.as_view({'get': 'retrieve'}), name='top-week-songs'),
+    path('top/week/songs/', songs.TopWeekSongsViewSet.as_view({'get': 'list'}), name='top-week-song'),
+    path('song/', songs.SongGenericView.as_view(), name='song'),
 
+    path('get/songs/', songs.SongCatalogViewSet.as_view({'get': 'list'}), name='all-songs'),
+    path('get/song/', songs.SongCatalogViewSet.as_view({'get': 'retrieve'}), name='get-song'),
+
+]
+subscription_urlpatterns = [
+
+    path('subscription/', subscriptions.SubscriptionGenericView.as_view(), name='subscription'),
+    path('/subscription/song/', subscriptions.SubscriptionSongGenericView.as_view(), name='subscription-song')
+
+]
+album_urlpatterns = [
+
+    path('album/', albums.AlbumAPIView.as_view(), name='album'),
+    path('get/album/', albums.AlbumViewSet.as_view({'get': 'retrieve'}), name='get-album'),
+    path('get/albums/', albums.AlbumViewSet.as_view({'get': 'list'}), name='get-albums'),
 ]
 
 customer_patterns = [
@@ -25,25 +38,19 @@ customer_patterns = [
     path('edit/user/', users.EditUserAPIView.as_view(), name='edit-user'),
 
     path('create/user/', users.CreateUserAPIView.as_view(), name='create-user'),
-    path('login/user/', users.login_user, name='login-user'),
-    path('get/user/profile/', users.get_user_profile, name='get_user_profile'),
-]
-
-block_patterns = [
-
-    #block page:
-    path('ban/or/unlock/user/', groups.BanUserAPIView.as_view(), name='ban-or-unlock-user'),
-    path('get/blocked/page/', views.get_blocked_page, name='blocked_page'),
+    path('login/user/', users.LoginAPIView.as_view(), name='login-user'),
+    path('get/user/profile/', users.CustomerProfileAPIView.as_view(), name='get_user_profile'),
 ]
 
 healthcheck_patterns = [
-    path('healthcheck/', views.healthcheck, name='healthcheck'),
+    path('healthcheck/', (lambda request: django.http.HttpResponse(status=200)), name='healthcheck'),
 ]
 
 
 urlpatterns += customer_patterns
 urlpatterns += songs_urlpatterns
-urlpatterns += block_patterns
+urlpatterns += subscription_urlpatterns
+urlpatterns += album_urlpatterns
 urlpatterns += healthcheck_patterns
 
 
@@ -69,6 +76,4 @@ openapi_urlpatterns_schema = [
 ]
 
 urlpatterns += openapi_urlpatterns_schema
-
-
 
