@@ -1,3 +1,4 @@
+
 # Music Service. 
 
 Docs Link: [Service API Endpoints Docs.](http://localhost:8000/swagger)
@@ -56,4 +57,3 @@ It is used for serving application data related to customers and their activity.
 
 ```
 
-#Usage
