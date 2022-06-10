@@ -1,64 +1,3 @@
-<<<<<<< HEAD
-
-# Music Service. 
-
-Docs Link: [Service API Endpoints Docs.](http://localhost:8000/swagger)
-
-#Introduction 
-
-`Music Service` - One Of The main components of the project.
-It is used for serving application data related to customers and their activity.
-
-
-
-#Requirements 
-
-`python` 3.8 or above
-
-`postgresql` 13.0 or above 
-
-`docker` 1.4 or above 
-
-`docker-compose` 3.8 (recommended)
-
-`redis` - whatever version 
-
-`RabbitMQ` - any management version.
-
-#
-
-`AWS S3` - have an account with following buckets:
-
-`SONG_AUDIO_FILE_BUCKET` - bucket for storing audio files.
-    
-`SUBSCRIPTION_PREVIEW_BUCKET` - bucket for storing previews for subscriptions.
-    
-`USER_AVATAR_BUCKET` - bucket for storing user avatars.
-
-
-#Technologies 
-```ini
-
-[FRAMEWORKS]
-
- - DJANGO (3.2) 
-
-[DATABASES]
-
- - PostgresSQL (13.3)
- - REDIS 
- - AWS S3
-
-[MESSAGE_BROKERS]
-
- - RABBITMQ
-
-[DEPLOYMENT]
- - DOCKER-COMPOSE, DOCKER
-
-```
-
-=======
 # Payment Service 
 
 API Documentation Link: [DocLink](http://localhost:8081/docs/)
@@ -69,7 +8,7 @@ API Documentation Link: [DocLink](http://localhost:8081/docs/)
 It Allows People to make transactions and purchase Song Subscriptions on specific period of time, Also make refunds and so on...
 
 ---
-## Dependencies 
+##Dependencies 
 ```xml
 <requirements>
     
@@ -84,7 +23,7 @@ It Allows People to make transactions and purchase Song Subscriptions on specifi
 </requirements>
 
 ```
-## Technologies 
+##Technologies 
 
 For this project I'm using framework FastAPI as a Main Framework with following additions:
 
@@ -92,11 +31,11 @@ For this project I'm using framework FastAPI as a Main Framework with following 
 `Payment Platform` - `Stripe` one of the most popular  .  
 `Database` - `postgresSQL`.
 
-# Deployment 
+#Deployment 
 
 `Docker` & `Docker-Compose`
 
-### Possible Issues related to Deployment
+###Possible Issues related to Deployment
 I was building this API using `MacOS` Operational System on M1 so there probably can be some issues running it on `Windows` (On `Linux` Everything works perfectly).
 
 If You are getting Some Errors, related to Postgresql `SCRAM-Authentication`, try to replace 
@@ -130,7 +69,7 @@ then run python file responsible for stripe-cli
 ```
 
 #Simple Integration.
-### Using python "requests" library
+###Using python "requests" library
 ```doctest
    import requests 
    payment_service_url = 'http://localhost:8081/some-url/'
@@ -138,7 +77,7 @@ then run python file responsible for stripe-cli
    http_response = session.method(url=payment_service_url,
    headers=headers, params=params, data=data, timeout=timeout)
 ```
-### Using Curl 
+###Using Curl 
 
 ```commandline
    curl -f http://localhost:8081/healthcheck/
@@ -146,4 +85,3 @@ then run python file responsible for stripe-cli
 
 Done! Make Sure all module/integration test has run successfully. 
 ### Go to the Link Above to get more info about API.
->>>>>>> origin/payment_service
